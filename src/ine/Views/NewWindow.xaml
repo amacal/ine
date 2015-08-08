@@ -1,0 +1,21 @@
+﻿<Window x:Class="ine.Views.NewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ine.Views" mc:Ignorable="d"
+        WindowStartupLocation="CenterOwner"
+        Title="Add links" Height="400" Width="750"
+        Style="{StaticResource ResourceKey={x:Type Window}}">
+    <Window.Resources>
+        <local:PasteControl x:Key="Paste" Next="PasteControl_GoNext"/>
+        <local:LinkListControl x:Key="Select" Back="LinkListControl_Back" Next="LinkListControl_Next" />
+        <local:ResourceListControl x:Key="Confirm" Back="ResourceListControl_Back" Schedule="ResourceListControl_Schedule"/>
+    </Window.Resources>
+    <TabControl>
+        <TabItem x:Name="data" Header="Data" Background="#3f4add66" 
+                 Content="{StaticResource ResourceKey=Paste}"/>
+        <TabItem Header="Logs" Background="#3f4bae8d"/>
+        <TabItem Header="Feedback" Background="#3f0977a5"/>
+    </TabControl>
+</Window>

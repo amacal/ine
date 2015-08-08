@@ -1,0 +1,67 @@
+﻿<UserControl x:Class="ine.Views.LinkListControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ine.Views"
+             mc:Ignorable="d" d:DesignHeight="400" d:DesignWidth="700">
+    <Grid Margin="5,5,5,2">
+        <Grid Height="30" VerticalAlignment="Top">
+            <TextBlock VerticalAlignment="Center" Text="Choose which links are useful for you"/>
+        </Grid>
+        <StackPanel Height="30" Orientation="Horizontal"
+                    VerticalAlignment="Bottom" HorizontalAlignment="Left">
+            <Button Content="Back" Width="100"
+                    Click="HandleBack" IsEnabled="{Binding Path=CanBack, Mode=OneWay}"/>
+        </StackPanel>
+        <StackPanel Height="30" Orientation="Horizontal"
+                    VerticalAlignment="Bottom" HorizontalAlignment="Center">
+            <Button Content="Select all" Width="120" 
+                    Click="HandleSelectAll" IsEnabled="{Binding Path=CanSelectAll, Mode=OneWay}"/>
+            <Button Content="Invert" Width="120" 
+                    Click="HandleInvert" IsEnabled="{Binding Path=CanInvert, Mode=OneWay}"/>
+            <Button Content="Unselect all" Width="120" 
+                    Click="HandleUnselectAll" IsEnabled="{Binding Path=CanUnselectAll, Mode=OneWay}"/>
+        </StackPanel>
+        <StackPanel Height="30" Orientation="Horizontal"
+                    VerticalAlignment="Bottom" HorizontalAlignment="Right">
+            <Button Content="Next" Width="100"
+                    Click="HandleNext" IsEnabled="{Binding Path=CanNext, Mode=OneWay}"/>
+        </StackPanel>
+        <ListView Margin="0,35,0,35" ItemsSource="{Binding Path=Links}">
+            <ListView.View>
+                <GridView AllowsColumnReorder="False">
+                    <GridViewColumn Header="" Width="30" CellTemplate="{StaticResource ResourceKey=CheckBoxTemplate}"/>
+                    <GridViewColumn Header="Name" Width="310">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Path=Name}" TextAlignment="Left" TextTrimming="CharacterEllipsis"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Hosting" Width="130">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Path=Hosting}" TextAlignment="Center"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Size" Width="100">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Path=Size}" TextAlignment="Right"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Status" Width="110">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Path=Status}" TextAlignment="Center"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</UserControl>
