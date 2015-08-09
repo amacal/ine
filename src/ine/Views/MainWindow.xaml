@@ -3,88 +3,16 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ine"
+        xmlns:local="clr-namespace:ine.Views"
         Style="{StaticResource ResourceKey={x:Type Window}}"
         WindowStartupLocation="CenterScreen"
         mc:Ignorable="d" Title="ine" Height="700" Width="1050">
     <TabControl>
         <TabItem Header="Transfer" Background="#3f4add66">
-            <Grid>
-                <StackPanel Height="30" VerticalAlignment="Top" Orientation="Horizontal">
-                    <Button Content="New" Width="100" Click="HandleAddLinks" />
-                    <Button Content="Start" Width="100" />
-                    <Button Content="Stop" Width="100" />
-                </StackPanel>
-                <ListView Margin="0,35,0,0" ItemsSource="{Binding Path=Links}">
-                    <ListView.View>
-                        <GridView AllowsColumnReorder="False">
-                            <GridViewColumn Header="Filename" Width="500">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Name}" TextAlignment="Left" TextTrimming="CharacterEllipsis"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Size" Width="100">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Size}" TextAlignment="Right"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Status" Width="110">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Status}" TextAlignment="Center"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Completed" Width="90">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Completed}" TextAlignment="Right"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Speed" Width="100">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Speed}" TextAlignment="Right"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Action" Width="100">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Content="START" FontSize="10" Margin="4"
-                                                    Click="Button_Click" DataContext="{Binding}"/>
-                                            <Button Content="STOP" FontSize="10" Margin="4"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-            </Grid>
+            <local:TransferControl x:Name="transfer" Captcha="HandleCaptcha"/>
         </TabItem>
         <TabItem Header="Captcha" Background="#3f8faafd">
-            <Grid Margin="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="33*"/>
-                    <RowDefinition Height="628*"/>
-                </Grid.RowDefinitions>
-                <Image x:Name="captchaImage" Margin="0,0,0,35" Grid.RowSpan="2"/>
-                <TextBox x:Name="captchText" Height="30" VerticalAlignment="Bottom"
-                         Margin="0,0,305,0" VerticalContentAlignment="Center" 
-                         MaxLength="30" Padding="10,0,10,0" Grid.Row="1"/>
-                <StackPanel Height="30" VerticalAlignment="Bottom" HorizontalAlignment="Right" Orientation="Horizontal" Grid.Row="1">
-                    <Button x:Name="solveButton" Content="Solve" Width="100"/>
-                    <Button Content="Refresh" Width="100"/>
-                    <Button Content="Cancel" Width="100"/>
-                </StackPanel>
-            </Grid>
+            <local:CaptchaControl x:Name="captcha" />
         </TabItem>
         <TabItem Header="Options" Background="#3f886291">
         </TabItem>

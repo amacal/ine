@@ -75,18 +75,29 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Core\NotificationList.cs" />
     <Compile Include="Core\ViewModelBase.cs" />
     <Compile Include="Domain\Link.cs" />
-    <Compile Include="Views\LinkListControl.xaml.cs">
-      <DependentUpon>LinkListControl.xaml</DependentUpon>
+    <Compile Include="Views\CaptchaControl.xaml.cs">
+      <DependentUpon>CaptchaControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\LinksControl.xaml.cs">
+      <DependentUpon>LinksControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\PasteControl.xaml.cs">
       <DependentUpon>PasteControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\ResourceListControl.xaml.cs">
-      <DependentUpon>ResourceListControl.xaml</DependentUpon>
+    <Compile Include="Views\ResourcesControl.xaml.cs">
+      <DependentUpon>ResourcesControl.xaml</DependentUpon>
     </Compile>
-    <Page Include="Views\LinkListControl.xaml">
+    <Compile Include="Views\TransferControl.xaml.cs">
+      <DependentUpon>TransferControl.xaml</DependentUpon>
+    </Compile>
+    <Page Include="Views\CaptchaControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\LinksControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -118,7 +129,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\ResourceListControl.xaml">
+    <Page Include="Views\ResourcesControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\TransferControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
