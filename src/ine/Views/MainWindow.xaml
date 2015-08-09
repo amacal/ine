@@ -11,7 +11,7 @@
         <TabItem Header="Transfer" Background="#3f4add66">
             <local:TransferControl x:Name="transfer" Captcha="HandleCaptcha"/>
         </TabItem>
-        <TabItem Header="Captcha" Background="#3f8faafd">
+        <TabItem Header="Captcha" x:Name="captchaHeader" Background="#3f8faafd">
             <local:CaptchaControl x:Name="captcha" />
         </TabItem>
         <TabItem Header="Options" Background="#3f886291">
