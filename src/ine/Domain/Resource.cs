@@ -11,5 +11,7 @@ namespace ine.Domain
         public string Name { get; set; }
 
         public string Size { get; set; }
+
+        public bool IsAvailable { get; set; }
     }
 }

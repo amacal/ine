@@ -68,7 +68,8 @@ namespace ine
                         Resource resource = new Resource
                         {
                             Url = link.Url,
-                            Hosting = link.Hosting
+                            Hosting = link.Hosting,
+                            IsAvailable = true
                         };
 
                         while (process.StandardOutput.EndOfStream == false)
@@ -85,12 +86,25 @@ namespace ine
                                 case "file-size":
                                     resource.Size = parts[1].Trim();
                                     break;
+
+                                case "file-status":
+                                    resource.IsAvailable = false;
+                                    break;
                             }
+                        }
+
+                        if (resource.IsAvailable == false)
+                        {
+                            task.OnStatus(link, "unavailable");
+                        }
+
+                        if (resource.IsAvailable == true)
+                        {
+                            task.OnStatus(link, "available");
                         }
 
                         if (resource.Name != null && resource.Size != null)
                         {
-                            task.OnStatus(link, "available");
                             task.OnCompleted(link, resource);
                         }
 

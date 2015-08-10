@@ -190,7 +190,7 @@ namespace ine.Views
             {
                 this.CanSelectAll = this.Links.Any(x => x.Selected == false);
                 this.CanUnselectAll = this.Links.Any(x => x.Selected == true);
-                this.CanNext = this.Links.Any(x => x.Selected == true) && this.Links.Where(x => x.Selected == true).All(x => x.Resource != null);
+                this.CanNext = this.Links.Any(x => x.Selected == true) && this.Links.Where(x => x.Selected == true).All(x => x.Resource != null && x.Resource.IsAvailable == true);
             }
 
             public void UpdateButtons()
