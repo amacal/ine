@@ -25,15 +25,24 @@ namespace ine.Views
 
         public event EventHandler Captcha;
 
-        public async Task Solve(Func<byte[], Task<string>> solver)
+        public async Task Solve(Func<byte[], CancellationToken, Task<string>> solver)
         {
             if (this.model.Captchas.Count > 0)
             {
                 CaptchaModel captcha = this.model.Captchas[0];
-                string solution = await solver.Invoke(captcha.Data);
 
-                captcha.Solution = solution;
-                this.model.Captchas.Remove(captcha);
+                try
+                {
+                    captcha.Solution = await solver.Invoke(captcha.Data, captcha.Cancellation);
+                }
+                catch (TaskCanceledException)
+                {
+                    // ignore
+                }
+                finally
+                {
+                    this.model.Captchas.Remove(captcha);
+                }
             }
         }
 
@@ -62,6 +71,7 @@ namespace ine.Views
             public DateTime Inserted { get; set; }
             public byte[] Data { get; set; }
             public string Solution { get; set; }
+            public CancellationToken Cancellation { get; set; }
         }
 
         public class ResourceModel : ViewModelBase
@@ -155,11 +165,11 @@ namespace ine.Views
             };
         }
 
-        private Func<byte[], Task<string>> GetSolver(Dispatcher dispatcher)
+        private Func<byte[], CancellationToken, Task<string>> GetSolver(Dispatcher dispatcher)
         {
             TaskCompletionSource<string> completion = new TaskCompletionSource<string>();
 
-            return data =>
+            return (data, cancellation) =>
             {
                 dispatcher.BeginInvoke(new Action(() =>
                 {
@@ -167,7 +177,8 @@ namespace ine.Views
                     CaptchaModel captcha = new CaptchaModel
                     {
                         Data = data,
-                        Inserted = DateTime.Now
+                        Inserted = DateTime.Now,
+                        Cancellation = cancellation
                     };
 
                     handler = (sender, args) =>
@@ -175,7 +186,15 @@ namespace ine.Views
                         if (args.Item == captcha)
                         {
                             this.model.Captchas.ItemRemoved -= handler;
-                            completion.SetResult(args.Item.Solution);
+
+                            if (String.IsNullOrWhiteSpace(captcha.Solution) == false)
+                            {
+                                completion.SetResult(args.Item.Solution);
+                            }
+                            else
+                            {
+                                completion.TrySetCanceled(cancellation);
+                            }
                         }
                     };
 

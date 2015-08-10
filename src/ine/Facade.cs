@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ine
@@ -237,11 +238,17 @@ namespace ine
 
                         try
                         {
-                            captcha = await task.OnCaptcha.Invoke(client.DownloadData(captcha));
-                        }
-                        finally
-                        {
+                            TimeSpan timeout = TimeSpan.FromMinutes(3);
+                            CancellationTokenSource source = new CancellationTokenSource(timeout);
+
+                            captcha = await task.OnCaptcha.Invoke(client.DownloadData(captcha), source.Token);
                             task.OnStatus("working");
+                        }
+                        catch (TaskCanceledException)
+                        {
+                            task.OnStatus("timeout");
+                            process.Kill();
+                            break;
                         }
                     }
 
@@ -283,11 +290,11 @@ namespace ine
                 {
                     task.OnProgress(args.BytesReceived, args.TotalBytesToReceive);
 
-                    lock(points)
+                    lock (points)
                     {
                         points.Add(Tuple.Create(DateTime.Now, args.BytesReceived));
 
-                        if (points.Count == 10)
+                        if (points.Count == 50)
                         {
                             points.RemoveAt(0);
                         }
