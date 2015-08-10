@@ -15,8 +15,8 @@
                  Margin="0,0,305,0" VerticalContentAlignment="Center" 
                  MaxLength="30" Padding="10,0,10,0" Grid.Row="1"/>
         <StackPanel Height="30" VerticalAlignment="Bottom" HorizontalAlignment="Right" Orientation="Horizontal" Grid.Row="1">
-            <Button x:Name="solveButton" Content="Solve" Width="100"/>
-            <Button Content="Refresh" Width="100"/>
+            <Button x:Name="solve" Content="Solve" Width="100"/>
+            <Button x:Name="reload" Content="Reload" Width="100"/>
             <Button Content="Cancel" Width="100"/>
         </StackPanel>
     </Grid>

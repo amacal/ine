@@ -25,15 +25,15 @@ namespace ine.Views
 
         public event EventHandler Captcha;
 
-        public async Task Solve(Func<byte[], CancellationToken, Task<string>> solver)
+        public async Task Solve(Func<Captcha, Task<string>> solver)
         {
             if (this.model.Captchas.Count > 0)
             {
-                CaptchaModel captcha = this.model.Captchas[0];
+                CaptchaModel model = this.model.Captchas[0];
 
                 try
                 {
-                    captcha.Solution = await solver.Invoke(captcha.Data, captcha.Cancellation);
+                    model.Solution = await solver.Invoke(model.Captcha);
                 }
                 catch (TaskCanceledException)
                 {
@@ -41,7 +41,7 @@ namespace ine.Views
                 }
                 finally
                 {
-                    this.model.Captchas.Remove(captcha);
+                    this.model.Captchas.Remove(model);
                 }
             }
         }
@@ -68,10 +68,8 @@ namespace ine.Views
 
         public class CaptchaModel
         {
-            public DateTime Inserted { get; set; }
-            public byte[] Data { get; set; }
+            public Captcha Captcha { get; set; }
             public string Solution { get; set; }
-            public CancellationToken Cancellation { get; set; }
         }
 
         public class ResourceModel : ViewModelBase
@@ -165,41 +163,39 @@ namespace ine.Views
             };
         }
 
-        private Func<byte[], CancellationToken, Task<string>> GetSolver(Dispatcher dispatcher)
+        private Func<Captcha, Task<string>> GetSolver(Dispatcher dispatcher)
         {
             TaskCompletionSource<string> completion = new TaskCompletionSource<string>();
 
-            return (data, cancellation) =>
+            return captcha =>
             {
                 dispatcher.BeginInvoke(new Action(() =>
                 {
                     EventHandler<ItemEventArgs<CaptchaModel>> handler = null;
-                    CaptchaModel captcha = new CaptchaModel
+                    CaptchaModel model = new CaptchaModel
                     {
-                        Data = data,
-                        Inserted = DateTime.Now,
-                        Cancellation = cancellation
+                        Captcha = captcha
                     };
 
                     handler = (sender, args) =>
                     {
-                        if (args.Item == captcha)
+                        if (args.Item == model)
                         {
                             this.model.Captchas.ItemRemoved -= handler;
 
-                            if (String.IsNullOrWhiteSpace(captcha.Solution) == false)
+                            if (String.IsNullOrWhiteSpace(model.Solution) == false)
                             {
                                 completion.SetResult(args.Item.Solution);
                             }
                             else
                             {
-                                completion.TrySetCanceled(cancellation);
+                                completion.TrySetCanceled(captcha.Cancellation);
                             }
                         }
                     };
 
                     this.model.Captchas.ItemRemoved += handler;
-                    this.model.Captchas.Add(captcha);
+                    this.model.Captchas.Add(model);
 
                     if (Captcha != null)
                     {

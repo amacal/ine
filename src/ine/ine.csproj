@@ -77,6 +77,7 @@
     </ApplicationDefinition>
     <Compile Include="Core\NotificationList.cs" />
     <Compile Include="Core\ViewModelBase.cs" />
+    <Compile Include="Domain\Captcha.cs" />
     <Compile Include="Domain\Link.cs" />
     <Compile Include="Views\CaptchaControl.xaml.cs">
       <DependentUpon>CaptchaControl.xaml</DependentUpon>

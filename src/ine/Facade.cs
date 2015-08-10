@@ -204,7 +204,7 @@ namespace ine
                 WindowStyle = ProcessWindowStyle.Hidden
             };
 
-            string captcha = null;
+            string solution = null;
             Process process = Process.Start(info);
 
             task.OnStatus("working");
@@ -218,11 +218,11 @@ namespace ine
                 switch (parts[0])
                 {
                     case "captcha-url":
-                        captcha = parts[1];
+                        solution = parts[1].Trim();
                         break;
 
                     case "download-url":
-                        response.DownloadUrl = parts[1];
+                        response.DownloadUrl = parts[1].Trim();
                         break;
 
                     case "message":
@@ -244,7 +244,7 @@ namespace ine
                         break;
                 }
 
-                if (String.IsNullOrWhiteSpace(captcha) == false)
+                if (String.IsNullOrWhiteSpace(solution) == false)
                 {
                     using (WebClient client = new WebClient())
                     {
@@ -254,8 +254,28 @@ namespace ine
                         {
                             TimeSpan timeout = TimeSpan.FromMinutes(3);
                             CancellationTokenSource source = new CancellationTokenSource(timeout);
+                            Captcha captcha = new Captcha
+                            {
+                                Data = client.DownloadData(solution),
+                                Cancellation = source.Token
+                            };
 
-                            captcha = await task.OnCaptcha.Invoke(client.DownloadData(captcha), source.Token);
+                            captcha.Reload = async () =>
+                            {
+                                process.StandardInput.WriteLine();
+
+                                do
+                                {
+                                    line = await process.StandardOutput.ReadLineAsync();
+                                }
+                                while (line.StartsWith("captcha-url: ") == false);
+
+                                source = new CancellationTokenSource(timeout);
+                                captcha.Cancellation = source.Token;
+                                captcha.Data = await client.DownloadDataTaskAsync(line.Substring("captcha-url: ".Length));
+                            };
+
+                            solution = await task.OnCaptcha.Invoke(captcha);
                             task.OnStatus("working");
                         }
                         catch (TaskCanceledException)
@@ -266,8 +286,8 @@ namespace ine
                         }
                     }
 
-                    process.StandardInput.WriteLine(captcha);
-                    captcha = null;
+                    process.StandardInput.WriteLine(solution);
+                    solution = null;
                 }
             }
 
@@ -308,7 +328,7 @@ namespace ine
                     {
                         points.Add(Tuple.Create(DateTime.Now, args.BytesReceived));
 
-                        if (points.Count == 50)
+                        if (points.Count == 256)
                         {
                             points.RemoveAt(0);
                         }

@@ -1,6 +1,6 @@
-﻿using System;
+﻿using ine.Domain;
+using System;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,16 +16,67 @@ namespace ine.Views
             this.InitializeComponent();
         }
 
-        public Task<string> Solve(byte[] data, CancellationToken cancellation)
+        public Task<string> Solve(Captcha captcha)
         {
             EventHandler timerHandler = null;
             RoutedEventHandler solveHandler = null;
+            RoutedEventHandler reloadHandler = null;
 
-            BitmapImage image = new BitmapImage();
             TaskCompletionSource<string> completion = new TaskCompletionSource<string>();
             DispatcherTimer timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
 
-            using (var memory = new MemoryStream(data))
+            solveHandler = (sender, args) =>
+            {
+                string solution = this.captchText.Text;
+
+                timer.Tick -= timerHandler;
+                timer.Stop();
+
+                this.solve.Click -= solveHandler;
+                this.reload.Click -= reloadHandler;
+                this.captchaImage.Source = null;
+                this.captchText.Clear();
+
+                completion.SetResult(solution);
+            };
+
+            reloadHandler = async (sender, args) =>
+            {
+                await captcha.Reload();
+                this.captchaImage.Source = this.ApplyImage(captcha);
+            };
+
+            timerHandler = (sender, args) =>
+            {
+                if (captcha.Cancellation.IsCancellationRequested == true)
+                {
+                    timer.Tick -= timerHandler;
+                    timer.Stop();
+
+                    this.solve.Click -= solveHandler;
+                    this.reload.Click -= reloadHandler;
+                    this.captchaImage.Source = null;
+                    this.captchText.Clear();
+
+                    completion.TrySetCanceled(captcha.Cancellation);
+                }
+            };
+
+            this.captchaImage.Source = this.ApplyImage(captcha);
+            this.solve.Click += solveHandler;
+            this.reload.Click += reloadHandler;
+
+            timer.Tick += timerHandler;
+            timer.Start();
+
+            return completion.Task;
+        }
+
+        private BitmapImage ApplyImage(Captcha captcha)
+        {
+            BitmapImage image = new BitmapImage();
+
+            using (var memory = new MemoryStream(captcha.Data))
             {
                 memory.Seek(0, SeekOrigin.Begin);
 
@@ -38,42 +89,7 @@ namespace ine.Views
                 image.Freeze();
             }
 
-            solveHandler = (sender, args) =>
-            {
-                string captcha = this.captchText.Text;
-
-                timer.Tick -= timerHandler;
-                timer.Stop();
-
-                this.solveButton.Click -= solveHandler;
-                this.captchaImage.Source = null;
-                this.captchText.Clear();
-
-                completion.SetResult(captcha);
-            };
-
-            timerHandler = (sender, args) =>
-            {
-                if (cancellation.IsCancellationRequested == true)
-                {
-                    timer.Tick -= timerHandler;
-                    timer.Stop();
-
-                    this.solveButton.Click -= solveHandler;
-                    this.captchaImage.Source = null;
-                    this.captchText.Clear();
-
-                    completion.TrySetCanceled(cancellation);
-                }
-            };
-
-            this.captchaImage.Source = image;
-            this.solveButton.Click += solveHandler;
-
-            timer.Tick += timerHandler;
-            timer.Start();
-
-            return completion.Task;
+            return image;
         }
     }
 }

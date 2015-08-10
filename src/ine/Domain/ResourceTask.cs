@@ -16,7 +16,7 @@ namespace ine.Domain
 
         public CancellationToken Cancellation { get; set; }
 
-        public Func<byte[], CancellationToken, Task<string>> OnCaptcha { get; set; }
+        public Func<Captcha, Task<string>> OnCaptcha { get; set; }
 
         public Action<string> OnStatus { get; set; }
 
