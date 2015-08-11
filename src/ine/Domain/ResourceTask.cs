@@ -25,5 +25,7 @@ namespace ine.Domain
         public Action<long> OnSpeed { get; set; }
 
         public Action<TimeSpan> OnEstimation { get; set; }
+
+        public Action<bool> OnCompleted { get; set; }
     }
 }

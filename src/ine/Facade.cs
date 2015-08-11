@@ -139,16 +139,24 @@ namespace ine
                         }
 
                         task.OnStatus(String.Empty);
+                        task.OnCompleted.Invoke(true);
                         break;
                     }
+                }
+                catch (TaskCanceledException)
+                {
+                    task.OnStatus("timeout");
+                    task.OnCompleted.Invoke(false);
                 }
                 catch (OperationCanceledException)
                 {
                     task.OnStatus("cancelled");
+                    task.OnCompleted.Invoke(false);
                 }
                 catch
                 {
                     task.OnStatus("failed");
+                    task.OnCompleted.Invoke(false);
                 }
                 finally
                 {
@@ -207,53 +215,57 @@ namespace ine
             string solution = null;
             Process process = Process.Start(info);
 
-            task.OnStatus("working");
-
-            while (process.StandardOutput.EndOfStream == false)
+            try
             {
-                string line = process.StandardOutput.ReadLine();
-                string[] parts = line.Split(new[] { ':' }, 2);
+                task.OnStatus("working");
 
-                response.Lines.Add(line);
-                switch (parts[0])
+                while (process.StandardOutput.EndOfStream == false)
                 {
-                    case "captcha-url":
-                        solution = parts[1].Trim();
-                        break;
+                    task.Cancellation.ThrowIfCancellationRequested();
 
-                    case "download-url":
-                        response.DownloadUrl = parts[1].Trim();
-                        break;
+                    string line = process.StandardOutput.ReadLine();
+                    string[] parts = line.Split(new[] { ':' }, 2);
 
-                    case "message":
-                        {
-                            Match match = regex.Match(line);
+                    response.Lines.Add(line);
+                    switch (parts[0])
+                    {
+                        case "captcha-url":
+                            solution = parts[1].Trim();
+                            break;
 
-                            if (match.Success == true)
+                        case "download-url":
+                            response.DownloadUrl = parts[1].Trim();
+                            break;
+
+                        case "message":
                             {
-                                if (match.Groups["minutes"].Success == true)
+                                Match match = regex.Match(line);
+
+                                if (match.Success == true)
                                 {
-                                    response.Waiting = TimeSpan.FromMinutes(Int32.Parse(match.Groups["minutes"].Value));
+                                    if (match.Groups["minutes"].Success == true)
+                                    {
+                                        response.Waiting = TimeSpan.FromMinutes(Int32.Parse(match.Groups["minutes"].Value));
+                                    }
                                 }
                             }
-                        }
 
-                        break;
+                            break;
 
-                    case "fatal":
-                        break;
-                }
+                        case "fatal":
+                            break;
+                    }
 
-                if (String.IsNullOrWhiteSpace(solution) == false)
-                {
-                    using (WebClient client = new WebClient())
+                    if (String.IsNullOrWhiteSpace(solution) == false)
                     {
-                        task.OnStatus("decaptching");
+                        task.Cancellation.ThrowIfCancellationRequested();
 
-                        try
+                        using (WebClient client = new WebClient())
                         {
+                            task.OnStatus("decaptching");
+
                             TimeSpan timeout = TimeSpan.FromMinutes(3);
-                            CancellationTokenSource source = new CancellationTokenSource(timeout);
+                            CancellationTokenSource source = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(timeout).Token, task.Cancellation);
                             Captcha captcha = new Captcha
                             {
                                 Data = client.DownloadData(solution),
@@ -270,7 +282,7 @@ namespace ine
                                 }
                                 while (line.StartsWith("captcha-url: ") == false);
 
-                                source = new CancellationTokenSource(timeout);
+                                source = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(timeout).Token, task.Cancellation);
                                 captcha.Cancellation = source.Token;
                                 captcha.Data = await client.DownloadDataTaskAsync(line.Substring("captcha-url: ".Length));
                             };
@@ -278,21 +290,25 @@ namespace ine
                             solution = await task.OnCaptcha.Invoke(captcha);
                             task.OnStatus("working");
                         }
-                        catch (TaskCanceledException)
-                        {
-                            task.OnStatus("timeout");
-                            process.Kill();
-                            break;
-                        }
+
+                        task.Cancellation.ThrowIfCancellationRequested();
+                        process.StandardInput.WriteLine(solution);
+                        solution = null;
                     }
-
-                    process.StandardInput.WriteLine(solution);
-                    solution = null;
                 }
-            }
 
-            process.WaitForExit();
-            return response;
+                process.WaitForExit();
+                return response;
+            }
+            finally
+            {
+                if (process.HasExited == false)
+                {
+                    process.Kill();
+                }
+
+                process.Dispose();
+            }
         }
 
         private async Task Wait(ResourceTask task, TimeSpan waiting)
@@ -355,6 +371,7 @@ namespace ine
 
                 task.OnStatus("downloading");
                 await client.DownloadFileTaskAsync(url, task.Destination);
+                task.Cancellation.Register(client.CancelAsync);
                 task.OnStatus("completed");
             }
         }

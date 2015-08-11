@@ -119,6 +119,7 @@ namespace ine.Views
         {
             public ControlModel Owner { get; set; }
             public Resource Source { get; set; }
+            public CancellationTokenSource Cancellation { get; set; }
 
             public string Name { get; set; }
             public string Hosting { get; set; }
@@ -132,9 +133,6 @@ namespace ine.Views
             {
                 this.Status = value;
                 this.Raise("Status");
-
-                this.Owner.RecalculateButtons();
-                this.Owner.UpdateButtons();
             }
 
             public void SetProgress(long received, long total)
@@ -170,9 +168,27 @@ namespace ine.Views
                 }
             }
 
+            public void Start(CancellationTokenSource cancellation)
+            {
+                this.Cancellation = cancellation;
+
+                this.Owner.RecalculateButtons();
+                this.Owner.UpdateButtons();
+            }
+
+            public void Complete(bool result)
+            {
+                this.Cancellation = null;
+                this.Estimation = null;
+                this.Raise("Estimation");
+
+                this.Owner.RecalculateButtons();
+                this.Owner.UpdateButtons();
+            }
+
             public bool IsWorking()
             {
-                return String.IsNullOrWhiteSpace(this.Status) == false;
+                return this.Cancellation != null;
             }
 
             public static ResourceModel FromResource(Resource resource, ControlModel owner)
@@ -200,6 +216,7 @@ namespace ine.Views
 
             foreach (Resource resource in resources)
             {
+                CancellationTokenSource cancellation = new CancellationTokenSource();
                 ResourceModel model = this.model.GetModel(resource);
                 ResourceTask task = new ResourceTask
                 {
@@ -207,15 +224,17 @@ namespace ine.Views
                     Hosting = model.Source.Hosting,
                     Destination = Path.Combine(path, model.Source.Name),
                     Scheduler = this.model.Scheduler,
-                    Cancellation = new CancellationToken(),
+                    Cancellation = cancellation.Token,
                     OnCaptcha = GetSolver(Application.Current.Dispatcher),
                     OnStatus = SetStatus(Application.Current.Dispatcher, model),
                     OnProgress = SetProgress(Application.Current.Dispatcher, model),
                     OnSpeed = SetSpeed(Application.Current.Dispatcher, model),
-                    OnEstimation = SetEstimation(Application.Current.Dispatcher, model)
+                    OnEstimation = SetEstimation(Application.Current.Dispatcher, model),
+                    OnCompleted = Complete(Application.Current.Dispatcher, model)
                 };
 
                 new Facade().Download(task);
+                model.Start(cancellation);
             }
         }
 
@@ -226,6 +245,12 @@ namespace ine.Views
             foreach (Resource resource in resources)
             {
                 ResourceModel model = this.model.GetModel(resource);
+                CancellationTokenSource cancellation = model.Cancellation;
+
+                if (cancellation != null)
+                {
+                    cancellation.Cancel();
+                }
             }
         }
 
@@ -258,6 +283,14 @@ namespace ine.Views
             return estimation =>
             {
                 dispatcher.BeginInvoke(new Action(() => model.SetEstimation(estimation)));
+            };
+        }
+
+        private Action<bool> Complete(Dispatcher dispatcher, ResourceModel model)
+        {
+            return result =>
+            {
+                dispatcher.BeginInvoke(new Action(() => model.Complete(result)));
             };
         }
 
