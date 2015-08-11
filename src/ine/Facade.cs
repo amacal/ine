@@ -316,6 +316,7 @@ namespace ine
 
         private async Task DownloadFile(ResourceTask task, string url)
         {
+            DateTime started = DateTime.Now;
             List<Tuple<DateTime, long>> points = new List<Tuple<DateTime, long>>();
 
             using (WebClient client = new WebClient())
@@ -323,6 +324,12 @@ namespace ine
                 client.DownloadProgressChanged += (sender, args) =>
                 {
                     task.OnProgress(args.BytesReceived, args.TotalBytesToReceive);
+
+                    double elapsed = (DateTime.Now - started).TotalSeconds;
+                    long downloaded = args.BytesReceived;
+                    long left = (args.TotalBytesToReceive - args.BytesReceived);
+
+                    task.OnEstimation(TimeSpan.FromSeconds(elapsed * left / downloaded));
 
                     lock (points)
                     {

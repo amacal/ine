@@ -118,6 +118,7 @@ namespace ine.Views
             public string Status { get; set; }
             public string Completed { get; set; }
             public string Speed { get; set; }
+            public string Estimation { get; set; }
 
             public void SetStatus(string value)
             {
@@ -147,6 +148,17 @@ namespace ine.Views
                 {
                     this.Speed = current;
                     this.Raise("Speed");
+                }
+            }
+
+            public void SetEstimation(TimeSpan time)
+            {
+                string current = String.Format(@"{0:d\.hh\:mm\:ss}", time).TrimStart('0', '.', ':');
+
+                if (current != this.Estimation)
+                {
+                    this.Estimation = current;
+                    this.Raise("Estimation");
                 }
             }
 
@@ -191,7 +203,8 @@ namespace ine.Views
                     OnCaptcha = GetSolver(Application.Current.Dispatcher),
                     OnStatus = SetStatus(Application.Current.Dispatcher, model),
                     OnProgress = SetProgress(Application.Current.Dispatcher, model),
-                    OnSpeed = SetSpeed(Application.Current.Dispatcher, model)
+                    OnSpeed = SetSpeed(Application.Current.Dispatcher, model),
+                    OnEstimation = SetEstimation(Application.Current.Dispatcher, model)
                 };
 
                 new Facade().Download(task);
@@ -219,6 +232,14 @@ namespace ine.Views
             return speed =>
             {
                 dispatcher.BeginInvoke(new Action(() => model.SetSpeed(speed)));
+            };
+        }
+
+        private Action<TimeSpan> SetEstimation(Dispatcher dispatcher, ResourceModel model)
+        {
+            return estimation =>
+            {
+                dispatcher.BeginInvoke(new Action(() => model.SetEstimation(estimation)));
             };
         }
 
