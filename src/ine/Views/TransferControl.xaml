@@ -10,7 +10,8 @@
             <Button Content="New" Width="100" Click="HandleNew" />
             <Button Content="Start" Width="100" Click="HandleStart"
                     IsEnabled="{Binding Path=CanStart, Mode=OneWay}"/>
-            <Button Content="Stop" Width="100" />
+            <Button Content="Stop" Width="100" Click="HandleStop"
+                    IsEnabled="{Binding Path=CanStop, Mode=OneWay}"/>
         </StackPanel>
         <ListView Margin="0,35,0,0" ItemsSource="{Binding Path=Resources}">
             <ListView.View>

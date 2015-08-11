@@ -60,10 +60,16 @@ namespace ine.Views
             public NotificationList<CaptchaModel> Captchas { get; set; }
 
             public bool CanStart { get; set; }
+            public bool CanStop { get; set; }
 
-            public Resource[] GetStopped()
+            public Resource[] GetStartable()
             {
                 return this.Resources.Where(x => x.IsWorking() == false).Select(x => x.Source).ToArray();
+            }
+
+            public Resource[] GetStoppable()
+            {
+                return this.Resources.Where(x => x.IsWorking() == true).Select(x => x.Source).ToArray();
             }
 
             public void AddResources(Resource[] resources)
@@ -93,11 +99,13 @@ namespace ine.Views
             public void RecalculateButtons()
             {
                 this.CanStart = this.Resources.Any(x => x.IsWorking() == false);
+                this.CanStop = this.Resources.Any(x => x.IsWorking() == true);
             }
 
             public void UpdateButtons()
             {
                 this.Raise("CanStart");
+                this.Raise("CanStop");
             }
         }
 
@@ -188,7 +196,7 @@ namespace ine.Views
         private void HandleStart(object sender, RoutedEventArgs e)
         {
             string path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            Resource[] resources = StartWindow.Show(Application.Current.MainWindow, this.model.GetStopped());
+            Resource[] resources = StartWindow.Show(Application.Current.MainWindow, this.model.GetStartable());
 
             foreach (Resource resource in resources)
             {
@@ -208,6 +216,16 @@ namespace ine.Views
                 };
 
                 new Facade().Download(task);
+            }
+        }
+
+        private void HandleStop(object sender, RoutedEventArgs e)
+        {
+            Resource[] resources = StopWindow.Show(Application.Current.MainWindow, this.model.GetStoppable());
+
+            foreach (Resource resource in resources)
+            {
+                ResourceModel model = this.model.GetModel(resource);
             }
         }
 

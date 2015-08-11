@@ -1,0 +1,63 @@
+﻿<Window x:Class="ine.Views.StopWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ine.Views" mc:Ignorable="d"
+        WindowStartupLocation="CenterOwner"
+        Title="Start" Height="400" Width="750"
+        Style="{StaticResource ResourceKey={x:Type Window}}">
+    <TabControl>
+        <TabItem x:Name="data" Header="Items" Background="#3f4add66">
+            <Grid Margin="5,5,5,2">
+                <Grid Height="30" VerticalAlignment="Top">
+                    <TextBlock VerticalAlignment="Center" Text="Choose which items you want to stop"/>
+                </Grid>
+                <StackPanel Height="30" Orientation="Horizontal"
+                            VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                    <Button Content="Select all" Width="120" Click="HandleSelectAll" 
+                            IsEnabled="{Binding Path=CanSelectAll, Mode=OneWay}"/>
+                    <Button Content="Invert" Width="120" Click="HandleInvert" 
+                            IsEnabled="{Binding Path=CanInvert, Mode=OneWay}"/>
+                    <Button Content="Unselect all" Width="120" Click="HandleUnselectAll"
+                            IsEnabled="{Binding Path=CanUnselectAll, Mode=OneWay}"/>
+                </StackPanel>
+                <StackPanel Height="30" Orientation="Horizontal"
+                            VerticalAlignment="Bottom" HorizontalAlignment="Right">
+                    <Button Content="Stop" Width="100" Click="HandleStop"
+                            IsEnabled="{Binding Path=CanStop, Mode=OneWay}"/>
+                </StackPanel>
+                <ListView Margin="0,35,0,35" ItemsSource="{Binding Path=Resources}">
+                    <ListView.View>
+                        <GridView AllowsColumnReorder="False">
+                            <GridViewColumn Header="" Width="30" CellTemplate="{StaticResource ResourceKey=CheckBoxTemplate}"/>
+                            <GridViewColumn Header="Name" Width="420">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Path=Name}" TextAlignment="Left" TextTrimming="CharacterEllipsis"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Hosting" Width="130">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Path=Hosting}" TextAlignment="Center"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Size" Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Path=Size}" TextAlignment="Right"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Grid>
+        </TabItem>
+        <TabItem Header="Logs" Background="#3f4bae8d"/>
+        <TabItem Header="Feedback" Background="#3f0977a5"/>
+    </TabControl>
+</Window>
