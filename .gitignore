@@ -1,5 +1,6 @@
 *.user
 *.suo
+*.tmp_proj
 
 [Dd]ebug*/
 [Rr]elease*/
