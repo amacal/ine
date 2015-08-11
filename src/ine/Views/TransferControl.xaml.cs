@@ -59,10 +59,45 @@ namespace ine.Views
             public ResourceModel[] Resources { get; set; }
             public NotificationList<CaptchaModel> Captchas { get; set; }
 
+            public bool CanStart { get; set; }
+
+            public Resource[] GetStopped()
+            {
+                return this.Resources.Where(x => x.IsWorking() == false).Select(x => x.Source).ToArray();
+            }
+
             public void AddResources(Resource[] resources)
             {
-                this.Resources = this.Resources.Concat((resources.Where(x => this.Resources.Any(y => y.Source.Url == x.Url) == false)).Select(ResourceModel.FromResource)).ToArray();
+                this.Resources = this.Resources.Concat(resources.Where(this.NotContain).Select(this.Create)).ToArray();
                 this.Raise("Resources");
+
+                this.RecalculateButtons();
+                this.UpdateButtons();
+            }
+
+            private bool NotContain(Resource resouce)
+            {
+                return this.Resources.Any(y => y.Source.Url == resouce.Url) == false;
+            }
+
+            private ResourceModel Create(Resource resource)
+            {
+                return ResourceModel.FromResource(resource, this);
+            }
+
+            public ResourceModel GetModel(Resource resource)
+            {
+                return this.Resources.Single(x => x.Source == resource);
+            }
+
+            public void RecalculateButtons()
+            {
+                this.CanStart = this.Resources.Any(x => x.IsWorking() == false);
+            }
+
+            public void UpdateButtons()
+            {
+                this.Raise("CanStart");
             }
         }
 
@@ -74,6 +109,7 @@ namespace ine.Views
 
         public class ResourceModel : ViewModelBase
         {
+            public ControlModel Owner { get; set; }
             public Resource Source { get; set; }
 
             public string Name { get; set; }
@@ -87,56 +123,79 @@ namespace ine.Views
             {
                 this.Status = value;
                 this.Raise("Status");
+
+                this.Owner.RecalculateButtons();
+                this.Owner.UpdateButtons();
             }
 
             public void SetProgress(long received, long total)
             {
-                this.Completed = String.Format("{0:f2}%", 100.0 * received / total);
-                this.Raise("Completed");
+                string current = String.Format("{0:f2}%", 100.0 * received / total);
+
+                if (current != this.Completed)
+                {
+                    this.Completed = current;
+                    this.Raise("Completed");
+                }
             }
 
             public void SetSpeed(long speed)
             {
-                this.Speed = String.Format("{0:f2} kB/s", 1.0 * speed / 1024);
-                this.Raise("Speed");
+                string current = String.Format("{0:f2} kB/s", 1.0 * speed / 1024);
+
+                if (current != this.Speed)
+                {
+                    this.Speed = current;
+                    this.Raise("Speed");
+                }
             }
 
-            public static ResourceModel FromResource(Resource link)
+            public bool IsWorking()
+            {
+                return String.IsNullOrWhiteSpace(this.Status) == false;
+            }
+
+            public static ResourceModel FromResource(Resource resource, ControlModel owner)
             {
                 return new ResourceModel
                 {
-                    Source = link,
-                    Name = link.Name,
-                    Hosting = link.Hosting,
-                    Size = link.Size
+                    Owner = owner,
+                    Source = resource,
+                    Name = resource.Name,
+                    Hosting = resource.Hosting,
+                    Size = resource.Size
                 };
             }
         }
 
-        private void HandleAddLinks(object sender, RoutedEventArgs e)
+        private void HandleNew(object sender, RoutedEventArgs e)
         {
             this.model.AddResources(NewWindow.Show(Application.Current.MainWindow));
         }
 
-        private async void Button_Click(object sender, RoutedEventArgs e)
+        private void HandleStart(object sender, RoutedEventArgs e)
         {
             string path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            ResourceModel model = (ResourceModel)((FrameworkElement)sender).DataContext;
+            Resource[] resources = StartWindow.Show(Application.Current.MainWindow, this.model.GetStopped());
 
-            ResourceTask task = new ResourceTask
+            foreach (Resource resource in resources)
             {
-                Url = model.Source.Url,
-                Hosting = model.Source.Hosting,
-                Destination = Path.Combine(path, model.Source.Name),
-                Scheduler = this.model.Scheduler,
-                Cancellation = new CancellationToken(),
-                OnCaptcha = GetSolver(Application.Current.Dispatcher),
-                OnStatus = SetStatus(Application.Current.Dispatcher, model),
-                OnProgress = SetProgress(Application.Current.Dispatcher, model),
-                OnSpeed = SetSpeed(Application.Current.Dispatcher, model)
-            };
+                ResourceModel model = this.model.GetModel(resource);
+                ResourceTask task = new ResourceTask
+                {
+                    Url = model.Source.Url,
+                    Hosting = model.Source.Hosting,
+                    Destination = Path.Combine(path, model.Source.Name),
+                    Scheduler = this.model.Scheduler,
+                    Cancellation = new CancellationToken(),
+                    OnCaptcha = GetSolver(Application.Current.Dispatcher),
+                    OnStatus = SetStatus(Application.Current.Dispatcher, model),
+                    OnProgress = SetProgress(Application.Current.Dispatcher, model),
+                    OnSpeed = SetSpeed(Application.Current.Dispatcher, model)
+                };
 
-            await new Facade().Download(task);
+                new Facade().Download(task);
+            }
         }
 
         private Action<string> SetStatus(Dispatcher dispatcher, ResourceModel model)

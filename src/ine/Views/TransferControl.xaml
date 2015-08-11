@@ -4,17 +4,18 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:ine.Views"
-             mc:Ignorable="d" d:DesignHeight="400" d:DesignWidth="700">
+             mc:Ignorable="d" d:DesignHeight="400" d:DesignWidth="1000">
     <Grid>
         <StackPanel Height="30" VerticalAlignment="Top" Orientation="Horizontal">
-            <Button Content="New" Width="100" Click="HandleAddLinks" />
-            <Button Content="Start" Width="100" />
+            <Button Content="New" Width="100" Click="HandleNew" />
+            <Button Content="Start" Width="100" Click="HandleStart"
+                    IsEnabled="{Binding Path=CanStart, Mode=OneWay}"/>
             <Button Content="Stop" Width="100" />
         </StackPanel>
         <ListView Margin="0,35,0,0" ItemsSource="{Binding Path=Resources}">
             <ListView.View>
                 <GridView AllowsColumnReorder="False">
-                    <GridViewColumn Header="Filename" Width="500">
+                    <GridViewColumn Header="Filename" Width="600">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Path=Name}" TextAlignment="Left" TextTrimming="CharacterEllipsis"/>
@@ -46,17 +47,6 @@
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Path=Speed}" TextAlignment="Right"/>
-                            </DataTemplate>
-                        </GridViewColumn.CellTemplate>
-                    </GridViewColumn>
-                    <GridViewColumn Header="Action" Width="100">
-                        <GridViewColumn.CellTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Content="START" FontSize="10" Margin="4"
-                                            Click="Button_Click" DataContext="{Binding}"/>
-                                    <Button Content="STOP" FontSize="10" Margin="4"/>
-                                </StackPanel>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
