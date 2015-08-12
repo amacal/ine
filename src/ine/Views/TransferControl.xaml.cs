@@ -58,7 +58,7 @@ namespace ine.Views
 
             public Resource[] GetPersistable()
             {
-                return this.Resources.Select(x => x.Source).ToArray();
+                return this.Resources.Where(x => x.IsCompleted == false).Select(x => x.Source).ToArray();
             }
 
             public void AddResources(Resource[] resources)
@@ -115,6 +115,8 @@ namespace ine.Views
             public Resource Source { get; set; }
             public CancellationTokenSource Cancellation { get; set; }
 
+            public bool IsCompleted { get; set; }
+
             public string Name { get; set; }
             public string Hosting { get; set; }
             public string Size { get; set; }
@@ -165,6 +167,7 @@ namespace ine.Views
             public void Start(CancellationTokenSource cancellation)
             {
                 this.Cancellation = cancellation;
+                this.IsCompleted = false;
 
                 this.Owner.RecalculateButtons();
                 this.Owner.UpdateButtons();
@@ -175,6 +178,11 @@ namespace ine.Views
                 this.Cancellation = null;
                 this.Estimation = null;
                 this.Raise("Estimation");
+
+                if (result == true)
+                {
+                    this.IsCompleted = true;
+                }
 
                 this.Owner.RecalculateButtons();
                 this.Owner.UpdateButtons();
@@ -220,7 +228,7 @@ namespace ine.Views
             await this.Persist();
         }
 
-        private void HandleStart(object sender, RoutedEventArgs e)
+        private async void HandleStart(object sender, RoutedEventArgs e)
         {
             string path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             Resource[] resources = StartWindow.Show(Application.Current.MainWindow, this.model.GetStartable());
@@ -253,6 +261,8 @@ namespace ine.Views
                 new Facade().Download(task);
                 model.Start(cancellation);
             }
+
+            await this.Persist();
         }
 
         private void HandleStop(object sender, RoutedEventArgs e)
@@ -336,7 +346,11 @@ namespace ine.Views
         {
             return result =>
             {
-                dispatcher.BeginInvoke(new Action(() => model.Complete(result)));
+                dispatcher.BeginInvoke(new Action(async () =>
+                {
+                    model.Complete(result);
+                    await this.Persist();
+                }));
             };
         }
 

@@ -158,9 +158,9 @@ namespace ine
             }
         }
 
-        public Task Download(ResourceTask task)
+        public void Download(ResourceTask task)
         {
-            return Task.Run(async () =>
+            Task.Run(async () =>
             {
                 try
                 {

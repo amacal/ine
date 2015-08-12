@@ -18,7 +18,7 @@
         <ListView Margin="0,35,0,0" ItemsSource="{Binding Path=Resources}">
             <ListView.View>
                 <GridView AllowsColumnReorder="False">
-                    <GridViewColumn Header="Filename" Width="500">
+                    <GridViewColumn Header="Filename" Width="480">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Path=Name}" TextAlignment="Left" TextTrimming="CharacterEllipsis"/>
