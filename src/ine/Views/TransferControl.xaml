@@ -12,6 +12,8 @@
                     IsEnabled="{Binding Path=CanStart, Mode=OneWay}"/>
             <Button Content="Stop" Width="100" Click="HandleStop"
                     IsEnabled="{Binding Path=CanStop, Mode=OneWay}"/>
+            <Button Content="Remove" Width="100" Click="HandleRemove"
+                    IsEnabled="{Binding Path=CanRemove, Mode=OneWay}"/>
         </StackPanel>
         <ListView Margin="0,35,0,0" ItemsSource="{Binding Path=Resources}">
             <ListView.View>

@@ -39,6 +39,7 @@ namespace ine.Views
 
             public bool CanStart { get; set; }
             public bool CanStop { get; set; }
+            public bool CanRemove { get; set; }
 
             public Resource[] GetStartable()
             {
@@ -50,9 +51,23 @@ namespace ine.Views
                 return this.Resources.Where(x => x.IsWorking() == true).Select(x => x.Source).ToArray();
             }
 
+            public Resource[] GetRemovable()
+            {
+                return this.Resources.Select(x => x.Source).ToArray();
+            }
+
             public void AddResources(Resource[] resources)
             {
                 this.Resources = this.Resources.Concat(resources.Where(this.NotContain).Select(this.Create)).ToArray();
+                this.Raise("Resources");
+
+                this.RecalculateButtons();
+                this.UpdateButtons();
+            }
+
+            public void RemoveResources(Resource[] resources)
+            {
+                this.Resources = this.Resources.Where(x => resources.Contains(x.Source) == false).ToArray();
                 this.Raise("Resources");
 
                 this.RecalculateButtons();
@@ -78,12 +93,14 @@ namespace ine.Views
             {
                 this.CanStart = this.Resources.Any(x => x.IsWorking() == false);
                 this.CanStop = this.Resources.Any(x => x.IsWorking() == true);
+                this.CanRemove = this.Resources.Any();
             }
 
             public void UpdateButtons()
             {
                 this.Raise("CanStart");
                 this.Raise("CanStop");
+                this.Raise("CanRemove");
             }
         }
 
@@ -242,6 +259,29 @@ namespace ine.Views
                     cancellation.Cancel();
                 }
             }
+        }
+
+        private void HandleRemove(object sender, RoutedEventArgs e)
+        {
+            Resource[] resources = RemoveWindow.Show(Application.Current.MainWindow, this.model.GetRemovable());
+
+            if (resources.Length > 0)
+            {
+                this.OnLog(new LogEntry { Level = "INFO", Message = String.Format("Removing {0} item(s).", resources.Length) });
+            }
+
+            foreach (Resource resource in resources)
+            {
+                ResourceModel model = this.model.GetModel(resource);
+                CancellationTokenSource cancellation = model.Cancellation;
+
+                if (cancellation != null)
+                {
+                    cancellation.Cancel();
+                }
+            }
+
+            this.model.RemoveResources(resources);
         }
 
         private Action<string> SetStatus(Dispatcher dispatcher, ResourceModel model)

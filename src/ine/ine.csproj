@@ -92,6 +92,9 @@
     <Compile Include="Views\PasteControl.xaml.cs">
       <DependentUpon>PasteControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\RemoveWindow.xaml.cs">
+      <DependentUpon>RemoveWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ResourcesControl.xaml.cs">
       <DependentUpon>ResourcesControl.xaml</DependentUpon>
     </Compile>
@@ -141,6 +144,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Views\PasteControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\RemoveWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
