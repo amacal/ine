@@ -72,7 +72,7 @@ namespace ine.Views
 
                 try
                 {
-                    await captcha.Reload();
+                    await captcha.Reload.Invoke();
                     this.captchaImage.Source = this.ApplyImage(captcha);
                 }
                 finally

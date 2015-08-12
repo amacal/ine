@@ -24,29 +24,7 @@ namespace ine.Views
         }
 
         public Action<LogEntry> OnLog { get; set; }
-
-        public event EventHandler Captcha;
-
-        public async Task Solve(Func<Captcha, Task<string>> solver)
-        {
-            if (this.model.Captchas.Count > 0)
-            {
-                CaptchaModel model = this.model.Captchas[0];
-
-                try
-                {
-                    model.Solution = await solver.Invoke(model.Captcha);
-                }
-                catch (TaskCanceledException)
-                {
-                    // ignore
-                }
-                finally
-                {
-                    this.model.Captchas.Remove(model);
-                }
-            }
-        }
+        public Func<Captcha, Task<string>> OnCaptcha { get; set; }
 
         public class ControlModel : ViewModelBase
         {
@@ -54,12 +32,10 @@ namespace ine.Views
             {
                 this.Scheduler = new Scheduler();
                 this.Resources = new ResourceModel[0];
-                this.Captchas = new NotificationList<CaptchaModel>();
             }
 
             public Scheduler Scheduler { get; set; }
             public ResourceModel[] Resources { get; set; }
-            public NotificationList<CaptchaModel> Captchas { get; set; }
 
             public bool CanStart { get; set; }
             public bool CanStop { get; set; }
@@ -109,12 +85,6 @@ namespace ine.Views
                 this.Raise("CanStart");
                 this.Raise("CanStop");
             }
-        }
-
-        public class CaptchaModel
-        {
-            public Captcha Captcha { get; set; }
-            public string Solution { get; set; }
         }
 
         public class ResourceModel : ViewModelBase
@@ -324,41 +294,20 @@ namespace ine.Views
 
         private Func<Captcha, Task<string>> GetSolver(Dispatcher dispatcher)
         {
-            TaskCompletionSource<string> completion = new TaskCompletionSource<string>();
-
             return captcha =>
             {
-                dispatcher.BeginInvoke(new Action(() =>
+                TaskCompletionSource<string> completion = new TaskCompletionSource<string>();
+
+                dispatcher.BeginInvoke(new Action(async () =>
                 {
-                    EventHandler<ItemEventArgs<CaptchaModel>> handler = null;
-                    CaptchaModel model = new CaptchaModel
+                    string solution = await this.OnCaptcha.Invoke(captcha);
+                    if (String.IsNullOrWhiteSpace(solution) == false)
                     {
-                        Captcha = captcha
-                    };
-
-                    handler = (sender, args) =>
+                        completion.SetResult(solution);
+                    }
+                    else
                     {
-                        if (args.Item == model)
-                        {
-                            this.model.Captchas.ItemRemoved -= handler;
-
-                            if (String.IsNullOrWhiteSpace(model.Solution) == false)
-                            {
-                                completion.SetResult(args.Item.Solution);
-                            }
-                            else
-                            {
-                                completion.TrySetCanceled(captcha.Cancellation);
-                            }
-                        }
-                    };
-
-                    this.model.Captchas.ItemRemoved += handler;
-                    this.model.Captchas.Add(model);
-
-                    if (Captcha != null)
-                    {
-                        Captcha.Invoke(this, EventArgs.Empty);
+                        completion.TrySetCanceled(captcha.Cancellation);
                     }
                 }));
 

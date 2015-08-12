@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ine.Domain;
+using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 
@@ -11,15 +13,22 @@ namespace ine.Views
             this.InitializeComponent();
 
             this.transfer.OnLog = this.logging.AddLog;
+            this.transfer.OnCaptcha = this.HandleCaptcha;
         }
 
-        private async void HandleCaptcha(object sender, EventArgs e)
+        private async Task<string> HandleCaptcha(Captcha captcha)
         {
             Brush previous = this.captchaHeader.Foreground;
-
             this.captchaHeader.Foreground = Brushes.Red;
-            await this.transfer.Solve(this.captcha.Solve);
-            this.captchaHeader.Foreground = previous;
+
+            try
+            {
+                return await this.captcha.Solve(captcha);
+            }
+            finally
+            {
+                this.captchaHeader.Foreground = previous;
+            }
         }
     }
 }

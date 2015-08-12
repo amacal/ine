@@ -111,7 +111,7 @@ namespace ine
                                         break;
 
                                     case "fatal":
-                                        task.OnLog.Invoke(link, new LogEntry { Level = "FATAL", Message = parts[1] });
+                                        task.OnLog.Invoke(link, new LogEntry { Level = "FATAL", Message = parts[1].Trim() });
                                         break;
                                 }
                             }
@@ -159,13 +159,16 @@ namespace ine
                         if (response.DownloadUrl != null)
                         {
                             await this.DownloadFile(task, response.DownloadUrl);
+
                             task.OnCompleted.Invoke(true);
+                            task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Completed." });
+
                             break;
                         }
 
                         task.OnStatus(String.Empty);
                         task.OnCompleted.Invoke(false);
-                        task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Completed." });
+                        task.OnLog.Invoke(new LogEntry { Level = "WARN", Message = "Completed without downloading." });
 
                         break;
                     }
@@ -182,11 +185,11 @@ namespace ine
                     task.OnCompleted.Invoke(false);
                     task.OnLog.Invoke(new LogEntry { Level = "WARN", Message = "Downloading was cancelled." });
                 }
-                catch
+                catch (Exception ex)
                 {
                     task.OnStatus("failed");
                     task.OnCompleted.Invoke(false);
-                    task.OnLog.Invoke(new LogEntry { Level = "ERROR", Message = "Downloading failed." });
+                    task.OnLog.Invoke(new LogEntry { Level = "ERROR", Message = "Downloading failed. " + ex.Message });
                 }
                 finally
                 {
@@ -286,8 +289,13 @@ namespace ine
 
                             break;
 
+                        case "debug":
+                        case "request":
+                            task.OnLog.Invoke(new LogEntry { Level = "DEBUG", Message = line });
+                            break;
+
                         case "fatal":
-                            task.OnLog.Invoke(new LogEntry { Level = "FATAL", Message = parts[1] });
+                            task.OnLog.Invoke(new LogEntry { Level = "FATAL", Message = parts[1].Trim() });
                             break;
                     }
 

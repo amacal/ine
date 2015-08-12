@@ -1,9 +1,10 @@
 var system = require('system');
 var web = require('webpage');
 var fs = require('fs');
-
 var page = web.create();
+
 page.settings.loadImages = false;
+page.settings.userAgent = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.130 Safari/537.36';
 
 function onError(msg, trace) {
     console.log('fatal: ' + msg);
@@ -13,7 +14,11 @@ function onError(msg, trace) {
 }
 
 function onRequest(requestData, networkRequest) {
-    console.log('request: ' + requestData.url);
+    if (requestData.url.match(/ib.adnxs.com/g) != null) {
+        request.abort();
+    } else {
+        console.log('request: ' + requestData.url);
+    }
 }
 
 function requireFile() {
@@ -61,11 +66,19 @@ function printCaptchaUrl() {
     console.log('captcha-url: ' + url);
 }
 
-function printDownloadUrl() {
+function printDownloadUrl(onMissing) {
     var url = page.evaluate(function() {
-        return document.getElementById('download').href;
+        var element = document.getElementById('download');
+        if (element === undefined || element === null) return undefined;
+        return element.href;
     });
-    console.log('download-url: ' + url);
+    if (url !== undefined && url !== null) {
+        console.log('download-url: ' + url);
+        phantom.exit(0);
+    } else {
+        console.log('debug: retrying captcha.');
+        onMissing();
+    }
 }
 
 function printErrorMessage() {
@@ -95,13 +108,15 @@ function clickStartTimer() {
 function sendCaptcha(onContinue) {
     var solution = system.stdin.readLine();
     if (solution.length !== 0) {
+        console.log('debug: sending captcha');
         page.evaluate(function(solution) {
             document.getElementById('recaptcha_response_field').value = solution;
             document.getElementById('sendReCaptcha').click();
         }, solution);
         onContinue();
     } else {
-        page.evaluate(function() {
+        console.log('debug: reloading captcha');
+        page.evaluate(function () {
             document.getElementById('recaptcha_reload').click();
         });
         setTimeout(function() {
@@ -110,9 +125,22 @@ function sendCaptcha(onContinue) {
     }
 }
 
+function decaptcha() {
+    handleCaptcha(function () {
+        setTimeout(function () {
+            handleDownload();
+        }, 10000);
+    });
+}
+
 function handleCaptcha(onContinue) {
     printCaptchaUrl();
     sendCaptcha(onContinue);
+}
+
+function handleDownload() {
+    printErrorMessage();
+    printDownloadUrl(decaptcha);
 }
 
 function query(url) {
@@ -141,13 +169,7 @@ function download(url) {
         setTimeout(function() {
             clickStartTimer();
             setTimeout(function() {
-                handleCaptcha(function() {
-                    setTimeout(function() {
-                        printErrorMessage();
-                        printDownloadUrl();
-                        phantom.exit(0);
-                    }, 10000);
-                });
+                decaptcha();
             }, 70000);
         }, 20000);
     });

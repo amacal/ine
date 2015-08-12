@@ -9,7 +9,7 @@
         mc:Ignorable="d" Title="ine" Height="700" Width="1050">
     <TabControl>
         <TabItem Header="Transfer" Background="#3f4add66">
-            <local:TransferControl x:Name="transfer" Captcha="HandleCaptcha"/>
+            <local:TransferControl x:Name="transfer"/>
         </TabItem>
         <TabItem Header="Captcha" x:Name="captchaHeader" Background="#3f8faafd">
             <local:CaptchaControl x:Name="captcha" />
