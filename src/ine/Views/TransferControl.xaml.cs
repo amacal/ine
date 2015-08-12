@@ -56,6 +56,11 @@ namespace ine.Views
                 return this.Resources.Select(x => x.Source).ToArray();
             }
 
+            public Resource[] GetPersistable()
+            {
+                return this.Resources.Select(x => x.Source).ToArray();
+            }
+
             public void AddResources(Resource[] resources)
             {
                 this.Resources = this.Resources.Concat(resources.Where(this.NotContain).Select(this.Create)).ToArray();
@@ -193,7 +198,16 @@ namespace ine.Views
             }
         }
 
-        private void HandleNew(object sender, RoutedEventArgs e)
+        protected override async void OnInitialized(EventArgs e)
+        {
+            base.OnInitialized(e);
+
+            Resource[] resources = await new Facade().GetAll();
+
+            this.model.AddResources(resources);
+        }
+
+        private async void HandleNew(object sender, RoutedEventArgs e)
         {
             Resource[] resources = NewWindow.Show(Application.Current.MainWindow);
 
@@ -203,6 +217,7 @@ namespace ine.Views
             }
 
             this.model.AddResources(resources);
+            await this.Persist();
         }
 
         private void HandleStart(object sender, RoutedEventArgs e)
@@ -261,7 +276,7 @@ namespace ine.Views
             }
         }
 
-        private void HandleRemove(object sender, RoutedEventArgs e)
+        private async void HandleRemove(object sender, RoutedEventArgs e)
         {
             Resource[] resources = RemoveWindow.Show(Application.Current.MainWindow, this.model.GetRemovable());
 
@@ -282,6 +297,7 @@ namespace ine.Views
             }
 
             this.model.RemoveResources(resources);
+            await this.Persist();
         }
 
         private Action<string> SetStatus(Dispatcher dispatcher, ResourceModel model)
@@ -353,6 +369,11 @@ namespace ine.Views
 
                 return completion.Task;
             };
+        }
+
+        private Task Persist()
+        {
+            return new Facade().Persist(this.model.GetPersistable());
         }
     }
 }

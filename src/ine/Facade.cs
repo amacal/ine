@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +13,18 @@ namespace ine
 {
     public class Facade
     {
+        private static string GetDataPath(string filename)
+        {
+            string directory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\adma\\ine";
+
+            if (Directory.Exists(directory) == false)
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            return Path.Combine(directory, filename);
+        }
+
         private static string GetPhantomPath()
         {
             return Environment.CurrentDirectory + "\\phantomjs.exe";
@@ -431,6 +445,60 @@ namespace ine
                 task.Cancellation.Register(client.CancelAsync);
                 task.OnStatus("completed");
             }
+        }
+
+        public Task<Resource[]> GetAll()
+        {
+            return Task.Run(() =>
+            {
+                List<Resource> resources = new List<Resource>();
+
+                using (FileStream stream = new FileStream(GetDataPath("transfers.txt"), FileMode.OpenOrCreate, FileAccess.Read, FileShare.None, 16 * 1024, FileOptions.None))
+                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    while (reader.EndOfStream == false)
+                    {
+                        string[] parts = reader.ReadLine().Split(new[] { '|' }, 4);
+                        if (parts.Length == 4)
+                        {
+                            resources.Add(new Resource
+                            {
+                                Hosting = parts[0],
+                                Name = parts[1],
+                                Size = parts[2],
+                                Url = new Uri(parts[3], UriKind.Absolute)
+                            });
+                        }
+                    }
+                }
+
+                return resources.ToArray();
+            });
+        }
+
+        public Task Persist(Resource[] resources)
+        {
+            return Task.Run(() =>
+            {
+                using (FileStream stream = new FileStream(GetDataPath("transfers.txt"), FileMode.Create, FileAccess.Write, FileShare.None, 16 * 1024, FileOptions.WriteThrough))
+                using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8))
+                {
+                    foreach (Resource resource in resources)
+                    {
+                        writer.Write(resource.Hosting);
+                        writer.Write('|');
+                        writer.Write(resource.Name);
+                        writer.Write('|');
+                        writer.Write(resource.Size);
+                        writer.Write('|');
+                        writer.Write(resource.Url);
+                        writer.WriteLine();
+                    }
+
+                    writer.Flush();
+                    stream.Flush();
+                }
+            });
         }
     }
 }
