@@ -93,6 +93,10 @@ namespace ine
                                     case "file-status":
                                         resource.IsAvailable = false;
                                         break;
+
+                                    case "fatal":
+                                        task.OnLog.Invoke(link, new LogEntry { Level = "FATAL", Message = parts[1] });
+                                        break;
                                 }
                             }
 
@@ -139,11 +143,12 @@ namespace ine
                         if (response.DownloadUrl != null)
                         {
                             await this.DownloadFile(task, response.DownloadUrl);
+                            task.OnCompleted.Invoke(true);
                             break;
                         }
 
                         task.OnStatus(String.Empty);
-                        task.OnCompleted.Invoke(true);
+                        task.OnCompleted.Invoke(false);
                         task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Completed." });
 
                         break;
@@ -266,6 +271,7 @@ namespace ine
                             break;
 
                         case "fatal":
+                            task.OnLog.Invoke(new LogEntry { Level = "FATAL", Message = parts[1] });
                             break;
                     }
 
