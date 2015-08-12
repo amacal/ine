@@ -42,11 +42,17 @@ namespace ine
                     {
                         if (uri.Authority == "nitroflare.com" || uri.Authority == "www.nitroflare.com")
                         {
-                            links.Add(new Link
+                            if (uri.Segments.Length >= 3)
                             {
-                                Hosting = "nitroflare.com",
-                                Url = uri
-                            });
+                                if (uri.Segments[1].TrimEnd('/').ToLower() == "view")
+                                {
+                                    links.Add(new Link
+                                    {
+                                        Hosting = "nitroflare.com",
+                                        Url = uri
+                                    });
+                                }
+                            }
                         }
                     }
                 }

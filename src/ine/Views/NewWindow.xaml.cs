@@ -36,7 +36,12 @@ namespace ine.Views
             view.Owner = owner;
             view.ShowDialog();
 
-            return view.model.Resources;
+            if (view.DialogResult == true)
+            {
+                return view.model.Resources;
+            }
+
+            return new Resource[0];
         }
 
         public class WindowModel
@@ -78,6 +83,7 @@ namespace ine.Views
 
         private void ResourceListControl_Schedule(object sender, EventArgs e)
         {
+            this.DialogResult = true;
             this.Close();
         }
     }
