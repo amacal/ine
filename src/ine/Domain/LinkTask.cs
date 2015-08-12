@@ -9,5 +9,7 @@ namespace ine.Domain
         public Action<Link, string> OnStatus;
 
         public Action<Link, Resource> OnCompleted;
+
+        public Action<Link, LogEntry> OnLog;
     }
 }

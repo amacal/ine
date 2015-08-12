@@ -1,4 +1,5 @@
 ﻿using ine.Core;
+using ine.Domain;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,6 +18,7 @@ namespace ine.Views
             this.InitializeComponent();
         }
 
+        public Action<LogEntry> OnLog { get; set; }
         public event EventHandler Next;
 
         public string Text

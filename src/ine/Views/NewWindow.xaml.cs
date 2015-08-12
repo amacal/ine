@@ -20,8 +20,13 @@ namespace ine.Views
             this.InitializeComponent();
 
             this.pasteContent = (PasteControl)this.data.Content;
+            this.pasteContent.OnLog = this.logging.AddLog;
+
             this.linkListContent = (LinkListControl)this.Resources["Select"];
+            this.linkListContent.OnLog = this.logging.AddLog;
+
             this.resourceListContent = (ResourceListControl)this.Resources["Confirm"];
+            this.resourceListContent.OnLog = this.logging.AddLog;
         }
 
         public static Resource[] Show(Window owner)

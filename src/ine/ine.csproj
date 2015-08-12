@@ -79,11 +79,15 @@
     <Compile Include="Core\ViewModelBase.cs" />
     <Compile Include="Domain\Captcha.cs" />
     <Compile Include="Domain\Link.cs" />
+    <Compile Include="Domain\LogEntry.cs" />
     <Compile Include="Views\CaptchaControl.xaml.cs">
       <DependentUpon>CaptchaControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\LinksControl.xaml.cs">
       <DependentUpon>LinksControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\LoggingControl.xaml.cs">
+      <DependentUpon>LoggingControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\PasteControl.xaml.cs">
       <DependentUpon>PasteControl.xaml</DependentUpon>
@@ -105,6 +109,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\LinksControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\LoggingControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

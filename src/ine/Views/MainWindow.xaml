@@ -17,6 +17,7 @@
         <TabItem Header="Options" Background="#3f886291">
         </TabItem>
         <TabItem Header="Logs" Background="#3f4bae8d">
+            <local:LoggingControl x:Name="logging"/>
         </TabItem>
         <TabItem Header="Feedback" Background="#3f0977a5">
         </TabItem>

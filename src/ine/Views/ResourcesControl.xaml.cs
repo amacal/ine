@@ -19,6 +19,7 @@ namespace ine.Views
             this.InitializeComponent();
         }
 
+        public Action<LogEntry> OnLog { get; set; }
         public event EventHandler Back;
         public event EventHandler Schedule;
 

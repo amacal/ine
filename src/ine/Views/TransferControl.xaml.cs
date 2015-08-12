@@ -23,6 +23,8 @@ namespace ine.Views
             this.InitializeComponent();
         }
 
+        public Action<LogEntry> OnLog { get; set; }
+
         public event EventHandler Captcha;
 
         public async Task Solve(Func<Captcha, Task<string>> solver)
@@ -206,13 +208,25 @@ namespace ine.Views
 
         private void HandleNew(object sender, RoutedEventArgs e)
         {
-            this.model.AddResources(NewWindow.Show(Application.Current.MainWindow));
+            Resource[] resources = NewWindow.Show(Application.Current.MainWindow);
+
+            if (resources.Length > 0)
+            {
+                this.OnLog(new LogEntry { Level = "INFO", Message = String.Format("Adding {0} item(s).", resources.Length) });
+            }
+
+            this.model.AddResources(resources);
         }
 
         private void HandleStart(object sender, RoutedEventArgs e)
         {
             string path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             Resource[] resources = StartWindow.Show(Application.Current.MainWindow, this.model.GetStartable());
+
+            if (resources.Length > 0)
+            {
+                this.OnLog(new LogEntry { Level = "INFO", Message = String.Format("Scheduling {0} item(s).", resources.Length) });
+            }
 
             foreach (Resource resource in resources)
             {
@@ -226,6 +240,7 @@ namespace ine.Views
                     Scheduler = this.model.Scheduler,
                     Cancellation = cancellation.Token,
                     OnCaptcha = GetSolver(Application.Current.Dispatcher),
+                    OnLog = Log(Application.Current.Dispatcher),
                     OnStatus = SetStatus(Application.Current.Dispatcher, model),
                     OnProgress = SetProgress(Application.Current.Dispatcher, model),
                     OnSpeed = SetSpeed(Application.Current.Dispatcher, model),
@@ -241,6 +256,11 @@ namespace ine.Views
         private void HandleStop(object sender, RoutedEventArgs e)
         {
             Resource[] resources = StopWindow.Show(Application.Current.MainWindow, this.model.GetStoppable());
+
+            if (resources.Length > 0)
+            {
+                this.OnLog(new LogEntry { Level = "INFO", Message = String.Format("Stopping {0} item(s).", resources.Length) });
+            }
 
             foreach (Resource resource in resources)
             {
@@ -291,6 +311,14 @@ namespace ine.Views
             return result =>
             {
                 dispatcher.BeginInvoke(new Action(() => model.Complete(result)));
+            };
+        }
+
+        private Action<LogEntry> Log(Dispatcher dispatcher)
+        {
+            return entry =>
+            {
+                dispatcher.BeginInvoke(new Action(() => this.OnLog.Invoke(entry)));
             };
         }
 

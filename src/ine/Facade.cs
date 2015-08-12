@@ -52,7 +52,9 @@ namespace ine
                 {
                     Parallel.ForEach(task.Links, new ParallelOptions { MaxDegreeOfParallelism = 2 }, link =>
                     {
-                        task.OnStatus(link, "checking");
+                        task.OnStatus.Invoke(link, "checking");
+                        task.OnLog.Invoke(link, new LogEntry { Level = "INFO", Message = String.Format("Analyzing '{0}'.", link.Url) });
+                        task.OnLog.Invoke(link, new LogEntry { Level = "INFO", Message = "Starting PhantomJS" });
 
                         ProcessStartInfo info = new ProcessStartInfo
                         {
@@ -64,51 +66,53 @@ namespace ine
                             WindowStyle = ProcessWindowStyle.Hidden
                         };
 
-                        Process process = Process.Start(info);
-                        Resource resource = new Resource
+                        using (Process process = Process.Start(info))
                         {
-                            Url = link.Url,
-                            Hosting = link.Hosting,
-                            IsAvailable = true
-                        };
-
-                        while (process.StandardOutput.EndOfStream == false)
-                        {
-                            string line = process.StandardOutput.ReadLine();
-                            string[] parts = line.Split(new[] { ':' }, 2);
-
-                            switch (parts[0])
+                            Resource resource = new Resource
                             {
-                                case "file-name":
-                                    resource.Name = parts[1].Trim();
-                                    break;
+                                Url = link.Url,
+                                Hosting = link.Hosting,
+                                IsAvailable = true
+                            };
 
-                                case "file-size":
-                                    resource.Size = parts[1].Trim();
-                                    break;
+                            while (process.StandardOutput.EndOfStream == false)
+                            {
+                                string line = process.StandardOutput.ReadLine();
+                                string[] parts = line.Split(new[] { ':' }, 2);
 
-                                case "file-status":
-                                    resource.IsAvailable = false;
-                                    break;
+                                switch (parts[0])
+                                {
+                                    case "file-name":
+                                        resource.Name = parts[1].Trim();
+                                        break;
+
+                                    case "file-size":
+                                        resource.Size = parts[1].Trim();
+                                        break;
+
+                                    case "file-status":
+                                        resource.IsAvailable = false;
+                                        break;
+                                }
                             }
-                        }
 
-                        if (resource.IsAvailable == false)
-                        {
-                            task.OnStatus(link, "unavailable");
-                        }
+                            if (resource.IsAvailable == false)
+                            {
+                                task.OnStatus(link, "unavailable");
+                            }
 
-                        if (resource.IsAvailable == true)
-                        {
-                            task.OnStatus(link, "available");
-                        }
+                            if (resource.IsAvailable == true)
+                            {
+                                task.OnStatus(link, "available");
+                            }
 
-                        if (resource.Name != null && resource.Size != null)
-                        {
-                            task.OnCompleted(link, resource);
-                        }
+                            if (resource.Name != null && resource.Size != null)
+                            {
+                                task.OnCompleted(link, resource);
+                            }
 
-                        process.WaitForExit();
+                            process.WaitForExit();
+                        }
                     });
                 });
             }
@@ -140,6 +144,8 @@ namespace ine
 
                         task.OnStatus(String.Empty);
                         task.OnCompleted.Invoke(true);
+                        task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Completed." });
+
                         break;
                     }
                 }
@@ -147,16 +153,19 @@ namespace ine
                 {
                     task.OnStatus("timeout");
                     task.OnCompleted.Invoke(false);
+                    task.OnLog.Invoke(new LogEntry { Level = "WARN", Message = "Solving captcha timed out." });
                 }
                 catch (OperationCanceledException)
                 {
                     task.OnStatus("cancelled");
                     task.OnCompleted.Invoke(false);
+                    task.OnLog.Invoke(new LogEntry { Level = "WARN", Message = "Downloading was cancelled." });
                 }
                 catch
                 {
                     task.OnStatus("failed");
                     task.OnCompleted.Invoke(false);
+                    task.OnLog.Invoke(new LogEntry { Level = "ERROR", Message = "Downloading failed." });
                 }
                 finally
                 {
@@ -177,13 +186,16 @@ namespace ine
             bool succeeded = task.Scheduler.Schedule(task.Hosting);
             TimeSpan period = TimeSpan.FromSeconds(5);
 
-            task.OnStatus("pending");
+            task.OnStatus.Invoke("pending");
+            task.OnLog(new LogEntry { Level = "INFO", Message = String.Format("Scheduling '{0}'.", task.Url) });
 
             while (succeeded == false)
             {
-                await Task.Delay(period);
+                await Task.Delay(period, task.Cancellation);
                 succeeded = task.Scheduler.Schedule(task.Hosting);
             }
+
+            task.OnLog(new LogEntry { Level = "INFO", Message = String.Format("Url '{0}' acquired download slot.", task.Url) });
         }
 
         private void ReleaseSlot(ResourceTask task)
@@ -199,7 +211,8 @@ namespace ine
                 Lines = new List<string>()
             };
 
-            task.OnStatus("starting");
+            task.OnStatus.Invoke("starting");
+            task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Starting PhantomJS." });
 
             ProcessStartInfo info = new ProcessStartInfo
             {
@@ -259,6 +272,7 @@ namespace ine
                     if (String.IsNullOrWhiteSpace(solution) == false)
                     {
                         task.Cancellation.ThrowIfCancellationRequested();
+                        task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Handling captcha." });
 
                         using (WebClient client = new WebClient())
                         {
@@ -275,6 +289,7 @@ namespace ine
                             captcha.Reload = async () =>
                             {
                                 process.StandardInput.WriteLine();
+                                task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Reloading captcha." });
 
                                 do
                                 {
@@ -292,6 +307,8 @@ namespace ine
                         }
 
                         task.Cancellation.ThrowIfCancellationRequested();
+                        task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Sending captcha." });
+
                         process.StandardInput.WriteLine(solution);
                         solution = null;
                     }
@@ -319,6 +336,8 @@ namespace ine
             {
                 counter = TimeSpan.FromMinutes(20);
             }
+
+            task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Waiting." });
 
             while (counter.TotalMinutes > 0)
             {
@@ -369,7 +388,9 @@ namespace ine
                     }
                 };
 
-                task.OnStatus("downloading");
+                task.OnStatus.Invoke("downloading");
+                task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Downloading file." });
+
                 await client.DownloadFileTaskAsync(url, task.Destination);
                 task.Cancellation.Register(client.CancelAsync);
                 task.OnStatus("completed");

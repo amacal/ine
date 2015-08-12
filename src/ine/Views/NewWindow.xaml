@@ -15,7 +15,9 @@
     <TabControl>
         <TabItem x:Name="data" Header="Data" Background="#3f4add66" 
                  Content="{StaticResource ResourceKey=Paste}"/>
-        <TabItem Header="Logs" Background="#3f4bae8d"/>
+        <TabItem Header="Logs" Background="#3f4bae8d">
+            <local:LoggingControl x:Name="logging"/>
+        </TabItem>
         <TabItem Header="Feedback" Background="#3f0977a5"/>
     </TabControl>
 </Window>

@@ -18,6 +18,8 @@ namespace ine.Domain
 
         public Func<Captcha, Task<string>> OnCaptcha { get; set; }
 
+        public Action<LogEntry> OnLog { get; set; }
+
         public Action<string> OnStatus { get; set; }
 
         public Action<long, long> OnProgress { get; set; }

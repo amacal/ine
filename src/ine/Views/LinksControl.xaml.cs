@@ -22,6 +22,7 @@ namespace ine.Views
             this.InitializeComponent();
         }
 
+        public Action<LogEntry> OnLog { get; set; }
         public event EventHandler Back;
         public event EventHandler Next;
 
@@ -44,6 +45,13 @@ namespace ine.Views
                     dispatcher.BeginInvoke(new Action(() =>
                     {
                         this.model.Complete(link, resource);
+                    }));
+                },
+                OnLog = (link, entry) =>
+                {
+                    dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        this.OnLog.Invoke(entry);
                     }));
                 }
             };
