@@ -1,5 +1,4 @@
-﻿using ine.Domain;
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Media;
 
@@ -11,12 +10,7 @@ namespace ine.Views
         {
             this.InitializeComponent();
 
-            this.transfer.OnLog = this.HandleLog;
-        }
-
-        private void HandleLog(LogEntry entry)
-        {
-            this.logging.AddLog(entry);
+            this.transfer.OnLog = this.logging.AddLog;
         }
 
         private async void HandleCaptcha(object sender, EventArgs e)

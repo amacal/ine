@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -12,6 +11,23 @@ namespace ine
 {
     public class Facade
     {
+        private static string GetPhantomPath()
+        {
+            return Environment.CurrentDirectory + "\\phantomjs.exe";
+        }
+
+        private static string GetScriptPath(string hosting)
+        {
+            switch (hosting)
+            {
+                case "nitroflare.com":
+                    return Environment.CurrentDirectory + "\\Scripts\\nitroflare.js";
+
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
         public async Task<Link[]> ParseTextToLinks(string text)
         {
             Uri uri;
@@ -58,8 +74,8 @@ namespace ine
 
                         ProcessStartInfo info = new ProcessStartInfo
                         {
-                            FileName = @"D:\Drive\Projects\phantomjs.exe",
-                            Arguments = @"D:\Drive\Projects\nitroflare.js query " + link.Url.ToString(),
+                            FileName = GetPhantomPath(),
+                            Arguments = GetScriptPath(link.Hosting) + " query " + link.Url.ToString(),
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             CreateNoWindow = true,
@@ -221,8 +237,8 @@ namespace ine
 
             ProcessStartInfo info = new ProcessStartInfo
             {
-                FileName = @"D:\Drive\Projects\phantomjs.exe",
-                Arguments = @"D:\Drive\Projects\nitroflare.js download " + task.Url.ToString(),
+                FileName = GetPhantomPath(),
+                Arguments = GetScriptPath(task.Hosting) + " download " + task.Url.ToString(),
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardInput = true,

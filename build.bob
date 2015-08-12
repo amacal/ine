@@ -1,0 +1,45 @@
+using System.Collections.Generic;
+
+using Bob;
+
+public class Build : IBob
+{
+    private ITask Clean()
+    {
+        return FileSystem.Delete(parameters =>
+        {
+            parameters.Directories = FileSystem.Directories.Match("build");
+        });
+    }
+
+    private ITask Restore()
+    {
+        return NuGet.Restore(parameters =>
+        {
+            parameters.Path = NuGet.Path.Online(settings =>
+            {
+                settings.Cache = NuGet.Cache.AppData();
+            });
+        });
+    }
+
+    private IEnumerable<ITask> Compile()
+    {
+        yield return MsBuild.Compile(parameters =>
+        {
+            parameters.Output = FileSystem.Directories.Relative("build\\output");
+            parameters.Properties.Add(MsBuild.Properties.Configuration.Release());
+        });
+    }
+
+    private IEnumerable<ITask> Default()
+    {
+        yield break;
+    }
+
+    public void Execute(IPipeline pipeline)
+    {
+        pipeline.Default(Default);
+        pipeline.Define(Clean, Restore, Compile, Default);
+    }
+}
