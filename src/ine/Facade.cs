@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -42,7 +43,20 @@ namespace ine
             }
         }
 
-        public async Task<Link[]> ParseTextToLinks(string text)
+        public Task<Link[]> ParseTextToLinks(string text)
+        {
+            return Task.Run(async () =>
+            {
+                var query =
+                    from link in await this.ParseTextToLinks(text, true)
+                    group link by link.Url into byUrl
+                    select byUrl.First();
+
+                return query.ToArray();
+            });
+        }
+
+        private async Task<Link[]> ParseTextToLinks(string text, bool deep)
         {
             Uri uri;
             List<Link> links = new List<Link>();
@@ -52,10 +66,12 @@ namespace ine
             {
                 foreach (Match match in Regex.Matches(text, pattern))
                 {
-                    if (Uri.TryCreate(match.Value.ToLower(), UriKind.Absolute, out uri) == true)
+                    if (Uri.TryCreate(match.Value, UriKind.Absolute, out uri) == true)
                     {
                         if (uri.Authority == "nitroflare.com" || uri.Authority == "www.nitroflare.com")
                         {
+                            uri = new Uri(match.Value.ToLower(), UriKind.Absolute);
+
                             if (uri.Segments.Length >= 3)
                             {
                                 if (uri.Segments[1].TrimEnd('/').ToLower() == "view")
@@ -65,6 +81,20 @@ namespace ine
                                         Hosting = "nitroflare.com",
                                         Url = uri
                                     });
+                                }
+                            }
+                        }
+                        else if (deep == true)
+                        {
+                            using (WebClient client = new WebClient())
+                            {
+                                try
+                                {
+                                    links.AddRange(await this.ParseTextToLinks(await client.DownloadStringTaskAsync(uri), false));
+                                }
+                                catch (WebException)
+                                {
+                                    // ignore
                                 }
                             }
                         }
