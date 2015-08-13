@@ -25,6 +25,10 @@ namespace ine.Views
             {
                 return await this.captcha.Solve(captcha);
             }
+            catch (TaskCanceledException)
+            {
+                return null;
+            }
             finally
             {
                 this.captchaHeader.Foreground = previous;

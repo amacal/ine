@@ -10,7 +10,6 @@ function onError(msg, trace) {
     console.log('fatal: ' + msg);
     fs.write('dump.txt', page.content, 'w');
     page.render('dump.png');
-    phantom.exit(1);
 }
 
 function onRequest(requestData, networkRequest) {
