@@ -10,8 +10,8 @@
             <RowDefinition Height="33*"/>
             <RowDefinition Height="628*"/>
         </Grid.RowDefinitions>
-        <Image x:Name="captchaImage" Margin="0,0,0,35" Grid.RowSpan="2"/>
-        <TextBox x:Name="captchText" Height="30" VerticalAlignment="Bottom"
+        <Image x:Name="image" Margin="0,0,0,35" Grid.RowSpan="2"/>
+        <TextBox x:Name="text" Height="30" VerticalAlignment="Bottom"
                  Margin="0,0,305,0" VerticalContentAlignment="Center" 
                  MaxLength="30" Padding="10,0,10,0" Grid.Row="1"
                  TextChanged="HandleTextChanged"/>

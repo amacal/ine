@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
@@ -20,6 +21,7 @@ namespace ine.Views
         {
             Action dispose = null, initialize = null;
             EventHandler timerHandler = null;
+            KeyEventHandler keyHandler = null;
             RoutedEventHandler solveHandler = null;
             RoutedEventHandler reloadHandler = null;
             RoutedEventHandler cancelHandler = null;
@@ -30,7 +32,8 @@ namespace ine.Views
             initialize = () =>
             {
                 this.panel.Visibility = Visibility.Visible;
-                this.captchaImage.Source = this.ApplyImage(captcha);
+                this.image.Source = this.ApplyImage(captcha);
+                this.text.KeyDown += keyHandler;
                 this.solve.Click += solveHandler;
                 this.solve.IsEnabled = false;
                 this.reload.Click += reloadHandler;
@@ -52,16 +55,28 @@ namespace ine.Views
                 this.solve.Click -= solveHandler;
                 this.reload.Click -= reloadHandler;
                 this.cancel.Click -= cancelHandler;
-                this.captchaImage.Source = null;
-                this.captchText.Clear();
+                this.text.KeyDown -= keyHandler;
+                this.image.Source = null;
+                this.text.Clear();
             };
 
             solveHandler = (sender, args) =>
             {
-                string solution = this.captchText.Text;
+                string solution = this.text.Text;
 
                 dispose.Invoke();
                 completion.SetResult(solution.Trim());
+            };
+
+            keyHandler = (sender, args) =>
+            {
+                if (this.solve.IsEnabled == true && args.Key == Key.Enter)
+                {
+                    string solution = this.text.Text;
+
+                    dispose.Invoke();
+                    completion.SetResult(solution.Trim());
+                }
             };
 
             reloadHandler = async (sender, args) =>
@@ -73,7 +88,7 @@ namespace ine.Views
                 try
                 {
                     await captcha.Reload.Invoke();
-                    this.captchaImage.Source = this.ApplyImage(captcha);
+                    this.image.Source = this.ApplyImage(captcha);
                 }
                 finally
                 {
@@ -129,7 +144,7 @@ namespace ine.Views
 
         private bool CanBeSolved()
         {
-            return this.reload.IsEnabled && String.IsNullOrWhiteSpace(this.captchText.Text) == false;
+            return this.reload.IsEnabled && String.IsNullOrWhiteSpace(this.text.Text) == false;
         }
     }
 }
