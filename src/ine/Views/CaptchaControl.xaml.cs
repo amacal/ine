@@ -1,4 +1,5 @@
 ﻿using ine.Domain;
+using NAudio.Wave;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -22,9 +23,12 @@ namespace ine.Views
             Action dispose = null, initialize = null;
             EventHandler timerHandler = null;
             KeyEventHandler keyHandler = null;
+            RoutedEventHandler playHandler = null;
             RoutedEventHandler solveHandler = null;
             RoutedEventHandler reloadHandler = null;
             RoutedEventHandler cancelHandler = null;
+            RoutedEventHandler toAudioHandler = null;
+            RoutedEventHandler toTextHandler = null;
 
             TaskCompletionSource<string> completion = new TaskCompletionSource<string>();
             DispatcherTimer timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -32,14 +36,20 @@ namespace ine.Views
             initialize = () =>
             {
                 this.panel.Visibility = Visibility.Visible;
-                this.image.Source = this.ApplyImage(captcha);
-                this.text.KeyDown += keyHandler;
+
+                this.Refresh(captcha);
+                this.ApplyButtons(captcha);
+
+                this.play.Click += playHandler;
                 this.solve.Click += solveHandler;
                 this.solve.IsEnabled = false;
                 this.reload.Click += reloadHandler;
                 this.reload.IsEnabled = true;
                 this.cancel.Click += cancelHandler;
                 this.cancel.IsEnabled = true;
+                this.toAudio.Click += toAudioHandler;
+                this.toText.Click += toTextHandler;
+                this.text.KeyDown += keyHandler;
 
                 timer.Tick += timerHandler;
                 timer.Start();
@@ -52,49 +62,113 @@ namespace ine.Views
                 timer.Tick -= timerHandler;
                 timer.Stop();
 
+                this.play.Click -= playHandler;
                 this.solve.Click -= solveHandler;
                 this.reload.Click -= reloadHandler;
                 this.cancel.Click -= cancelHandler;
                 this.text.KeyDown -= keyHandler;
+                this.toAudio.Click -= toAudioHandler;
+                this.toText.Click -= toTextHandler;
+                this.text.KeyDown -= keyHandler;
+
                 this.image.Source = null;
                 this.text.Clear();
             };
 
+            playHandler = async (sender, args) =>
+            {
+                this.Lock();
+
+                try
+                {
+                    await Task.Run(() =>
+                    {
+                        using (MemoryStream memory = new MemoryStream(captcha.Data, false))
+                        {
+                            memory.Seek(0, SeekOrigin.Begin);
+
+                            using (WaveStream pcm = WaveFormatConversionStream.CreatePcmStream(new Mp3FileReader(memory)))
+                            using (WaveStream stream = new BlockAlignReductionStream(pcm))
+                            {
+                                using (WaveOut waveOut = new WaveOut(WaveCallbackInfo.FunctionCallback()))
+                                {
+                                    waveOut.Init(stream);
+                                    waveOut.Play();
+
+                                    while (waveOut.PlaybackState == PlaybackState.Playing)
+                                    {
+                                        System.Threading.Thread.Sleep(100);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                finally
+                {
+                    this.Unlock();
+                }
+            };
+
             solveHandler = (sender, args) =>
             {
-                string solution = this.text.Text;
-
+                completion.SetResult(this.text.Text.Trim());
                 dispose.Invoke();
-                completion.SetResult(solution.Trim());
             };
 
             keyHandler = (sender, args) =>
             {
                 if (this.solve.IsEnabled == true && args.Key == Key.Enter)
                 {
-                    string solution = this.text.Text;
-
+                    completion.SetResult(this.text.Text.Trim());
                     dispose.Invoke();
-                    completion.SetResult(solution.Trim());
                 }
             };
 
             reloadHandler = async (sender, args) =>
             {
-                this.reload.IsEnabled = false;
-                this.cancel.IsEnabled = false;
-                this.solve.IsEnabled = this.CanBeSolved();
+                this.Lock();
 
                 try
                 {
                     await captcha.Reload.Invoke();
-                    this.image.Source = this.ApplyImage(captcha);
+                    this.Refresh(captcha);
                 }
                 finally
                 {
-                    this.reload.IsEnabled = true;
-                    this.cancel.IsEnabled = true;
-                    this.solve.IsEnabled = this.CanBeSolved();
+                    this.Unlock();
+                }
+            };
+
+            toAudioHandler = async (sender, args) =>
+            {
+                this.Lock();
+
+                try
+                {
+                    await captcha.ToAudio.Invoke();
+                    this.Refresh(captcha);
+                    this.ApplyButtons(captcha);
+                }
+                finally
+                {
+                    this.Unlock();
+                }
+            };
+
+            toTextHandler = async (sender, args) =>
+            {
+                this.Lock();
+
+                try
+                {
+                    await captcha.ToImage.Invoke();
+                    this.Refresh(captcha);
+                    this.ApplyButtons(captcha);
+                }
+                finally
+                {
+                    this.Unlock();
                 }
             };
 
@@ -115,6 +189,68 @@ namespace ine.Views
 
             initialize.Invoke();
             return completion.Task;
+        }
+
+        private void ApplyButtons(Captcha captcha)
+        {
+            int count = 3;
+
+            if (captcha.Type == "image" && captcha.ToAudio != null)
+            {
+                count++;
+                this.toAudio.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                this.toAudio.Visibility = Visibility.Collapsed;
+            }
+
+            if (captcha.Type == "audio" && captcha.ToImage != null)
+            {
+                count++;
+                this.toText.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                this.toText.Visibility = Visibility.Collapsed;
+            }
+
+            this.text.Margin = new Thickness(0, 0, 5 + 100 * count, 0);
+        }
+
+        private void Lock()
+        {
+            this.reload.IsEnabled = false;
+            this.cancel.IsEnabled = false;
+            this.toAudio.IsEnabled = false;
+            this.toText.IsEnabled = false;
+            this.solve.IsEnabled = this.CanBeSolved();
+            this.play.IsEnabled = false;
+        }
+
+        private void Unlock()
+        {
+            this.reload.IsEnabled = true;
+            this.cancel.IsEnabled = true;
+            this.toAudio.IsEnabled = true;
+            this.toText.IsEnabled = true;
+            this.solve.IsEnabled = this.CanBeSolved();
+            this.play.IsEnabled = true;
+        }
+
+        private void Refresh(Captcha captcha)
+        {
+            if (captcha.Type == "image")
+            {
+                this.image.Source = this.ApplyImage(captcha);
+                this.play.Visibility = Visibility.Collapsed;
+            }
+
+            if (captcha.Type == "audio")
+            {
+                this.image.Source = null;
+                this.play.Visibility = Visibility.Visible;
+            }
         }
 
         private BitmapImage ApplyImage(Captcha captcha)

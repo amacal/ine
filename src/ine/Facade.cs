@@ -369,13 +369,14 @@ namespace ine
                             CancellationTokenSource source = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(timeout).Token, task.Cancellation);
                             Captcha captcha = new Captcha
                             {
+                                Type = "image",
                                 Data = client.DownloadData(solution),
                                 Cancellation = source.Token
                             };
 
                             captcha.Reload = async () =>
                             {
-                                process.StandardInput.WriteLine();
+                                process.StandardInput.WriteLine("::reload::");
                                 task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Reloading captcha." });
 
                                 do
@@ -387,6 +388,40 @@ namespace ine
                                 source = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(timeout).Token, task.Cancellation);
                                 captcha.Cancellation = source.Token;
                                 captcha.Data = await client.DownloadDataTaskAsync(line.Substring("captcha-url: ".Length));
+                            };
+
+                            captcha.ToAudio = async () =>
+                            {
+                                process.StandardInput.WriteLine("::audio::");
+                                task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Switching to audio." });
+
+                                do
+                                {
+                                    line = await process.StandardOutput.ReadLineAsync();
+                                }
+                                while (line.StartsWith("captcha-url: ") == false);
+
+                                source = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(timeout).Token, task.Cancellation);
+                                captcha.Cancellation = source.Token;
+                                captcha.Data = await client.DownloadDataTaskAsync(line.Substring("captcha-url: ".Length));
+                                captcha.Type = "audio";
+                            };
+
+                            captcha.ToImage = async () =>
+                            {
+                                process.StandardInput.WriteLine("::image::");
+                                task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Switching to image." });
+
+                                do
+                                {
+                                    line = await process.StandardOutput.ReadLineAsync();
+                                }
+                                while (line.StartsWith("captcha-url: ") == false);
+
+                                source = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(timeout).Token, task.Cancellation);
+                                captcha.Cancellation = source.Token;
+                                captcha.Data = await client.DownloadDataTaskAsync(line.Substring("captcha-url: ".Length));
+                                captcha.Type = "image";
                             };
 
                             solution = await task.OnCaptcha.Invoke(captcha);

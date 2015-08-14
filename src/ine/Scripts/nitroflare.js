@@ -60,9 +60,15 @@ function printFileStatus() {
 
 function printCaptchaUrl() {
     var url = page.evaluate(function() {
-        return document.getElementById('recaptcha_challenge_image').src;
+        var image = document.getElementById('recaptcha_challenge_image');
+        if (image !== undefined && image !== null) return image.src;
+        var audio = document.getElementById('recaptcha_audio_download');
+        if (audio !== undefined && audio !== null) return audio.href;
+        return null;
     });
-    console.log('captcha-url: ' + url);
+    if (url !== undefined && url !== null) {
+        console.log('captcha-url: ' + url);
+    }
 }
 
 function printDownloadUrl(onMissing) {
@@ -105,22 +111,39 @@ function clickStartTimer() {
 }
 
 function sendCaptcha(onContinue) {
+    console.log('debug: waiting for captcha');
     var solution = system.stdin.readLine();
-    if (solution.length !== 0) {
-        console.log('debug: sending captcha');
-        page.evaluate(function(solution) {
-            document.getElementById('recaptcha_response_field').value = solution;
-            document.getElementById('sendReCaptcha').click();
-        }, solution);
-        onContinue();
-    } else {
+    if (solution === '::reload::') {
         console.log('debug: reloading captcha');
         page.evaluate(function () {
             document.getElementById('recaptcha_reload').click();
         });
-        setTimeout(function() {
+        setTimeout(function () {
             handleCaptcha(onContinue);
         }, 3000);
+    } else if (solution === '::audio::') {
+        console.log('debug: switching captcha to audio');
+        page.evaluate(function () {
+            document.getElementById('recaptcha_switch_audio').click();
+        });
+        setTimeout(function () {
+            handleCaptcha(onContinue);
+        }, 3000);
+    } else if (solution === '::image::') {
+        console.log('debug: switching captcha to image');
+        page.evaluate(function () {
+            document.getElementById('recaptcha_switch_img').click();
+        });
+        setTimeout(function () {
+            handleCaptcha(onContinue);
+        }, 3000);
+    } else {
+        console.log('debug: sending captcha');
+        page.evaluate(function (solution) {
+            document.getElementById('recaptcha_response_field').value = solution;
+            document.getElementById('sendReCaptcha').click();
+        }, solution);
+        onContinue();
     }
 }
 
