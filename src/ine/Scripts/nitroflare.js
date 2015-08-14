@@ -13,7 +13,7 @@ function onError(msg, trace) {
 }
 
 function onRequest(requestData, networkRequest) {
-    if (requestData.url.match(/ib.adnxs.com/g) != null) {
+    if (requestData.url.substring(0,32).match(/google/g) == null && requestData.url.substring(0,32).match(/nitroflare/g) == null) {
         request.abort();
     } else {
         console.log('request: ' + requestData.url);
