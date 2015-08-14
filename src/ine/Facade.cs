@@ -14,7 +14,7 @@ namespace ine
 {
     public class Facade
     {
-        private static string GetDataPath(string filename)
+        private static string GetDataPath()
         {
             string directory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\adma\\ine";
 
@@ -23,7 +23,12 @@ namespace ine
                 Directory.CreateDirectory(directory);
             }
 
-            return Path.Combine(directory, filename);
+            return directory;
+        }
+
+        private static string GetDataPath(string filename)
+        {
+            return Path.Combine(GetDataPath(), filename);
         }
 
         private static string GetPhantomPath()
@@ -129,7 +134,8 @@ namespace ine
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             CreateNoWindow = true,
-                            WindowStyle = ProcessWindowStyle.Hidden
+                            WindowStyle = ProcessWindowStyle.Hidden,
+                            WorkingDirectory = GetDataPath()
                         };
 
                         using (Process process = Process.Start(info))
@@ -296,7 +302,8 @@ namespace ine
                 RedirectStandardOutput = true,
                 RedirectStandardInput = true,
                 CreateNoWindow = true,
-                WindowStyle = ProcessWindowStyle.Hidden
+                WindowStyle = ProcessWindowStyle.Hidden,
+                WorkingDirectory = GetDataPath()
             };
 
             string solution = null;
