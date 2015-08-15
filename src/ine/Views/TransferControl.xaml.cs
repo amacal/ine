@@ -220,7 +220,7 @@ namespace ine.Views
         {
             base.OnInitialized(e);
 
-            Resource[] resources = await new Facade().GetAll();
+            Resource[] resources = await new Facade().GetAllResources();
 
             this.model.AddResources(resources);
         }
@@ -397,7 +397,7 @@ namespace ine.Views
 
         private Task Persist()
         {
-            return new Facade().Persist(this.model.GetPersistable());
+            return new Facade().PersisteResources(this.model.GetPersistable());
         }
     }
 }

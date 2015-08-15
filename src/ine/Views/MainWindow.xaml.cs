@@ -1,5 +1,4 @@
 ﻿using ine.Domain;
-using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -13,8 +12,14 @@ namespace ine.Views
         {
             this.InitializeComponent();
 
-            this.transfer.OnLog = this.logging.AddLog;
+            this.transfer.OnLog = this.HandleLog;
             this.transfer.OnCaptcha = this.HandleCaptcha;
+        }
+
+        private void HandleLog(LogEntry entry)
+        {
+            this.logging.AddLog(entry);
+            new Facade().PersistLogs(entry);
         }
 
         private async Task<string> HandleCaptcha(Captcha captcha)

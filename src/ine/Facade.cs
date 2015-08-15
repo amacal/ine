@@ -1,4 +1,6 @@
 ﻿using ine.Domain;
+using Serilog;
+using Serilog.Events;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,6 +16,15 @@ namespace ine
 {
     public class Facade
     {
+        static Facade()
+        {
+            Log.Logger =
+                new LoggerConfiguration()
+                    .WriteTo.File(GetDataPath("logging.txt"))
+                    .MinimumLevel.Verbose()
+                    .CreateLogger();
+        }
+
         private static string GetDataPath()
         {
             string directory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\adma\\ine";
@@ -519,7 +530,7 @@ namespace ine
             }
         }
 
-        public Task<Resource[]> GetAll()
+        public Task<Resource[]> GetAllResources()
         {
             return Task.Run(() =>
             {
@@ -548,7 +559,7 @@ namespace ine
             });
         }
 
-        public Task Persist(Resource[] resources)
+        public Task PersisteResources(Resource[] resources)
         {
             return Task.Run(() =>
             {
@@ -571,6 +582,35 @@ namespace ine
                     stream.Flush();
                 }
             });
+        }
+
+        public void PersistLogs(params LogEntry[] entries)
+        {
+            foreach (LogEntry entry in entries)
+            {
+                switch (entry.Level)
+                {
+                    case "DEBUG":
+                        Log.Debug(entry.Message);
+                        break;
+
+                    case "INFO":
+                        Log.Information(entry.Message);
+                        break;
+
+                    case "WARN":
+                        Log.Warning(entry.Message);
+                        break;
+
+                    case "ERROR":
+                        Log.Error(entry.Message);
+                        break;
+
+                    case "FATAL":
+                        Log.Fatal(entry.Message);
+                        break;
+                }
+            }
         }
     }
 }
