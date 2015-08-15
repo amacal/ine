@@ -6,6 +6,10 @@ ine is a windows application to download files from popular file hosting sites
 release notes
 =============
 
+# 0.4
+- [IMPROVEMENT] Closing application with ongoing transfer triggers confirmation
+- [IMPROVEMENT] All logs are addionally persisted in the app-data directory
+
 # 0.3
 - [FEATURE] Links are also used as a source of text to parse
 - [FEATURE] Captcha can be switched to audio and back
