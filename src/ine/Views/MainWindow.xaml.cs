@@ -3,6 +3,7 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using System.ComponentModel;
 
 namespace ine.Views
 {
@@ -33,6 +34,16 @@ namespace ine.Views
             {
                 this.captchaHeader.Foreground = previous;
             }
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            if (this.transfer.IsWorking() == true)
+            {
+                e.Cancel = CloseWindow.Show(this) == false;
+            }
+
+            base.OnClosing(e);
         }
     }
 }

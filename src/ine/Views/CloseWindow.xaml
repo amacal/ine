@@ -1,0 +1,20 @@
+﻿<Window x:Class="ine.Views.CloseWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ine.Views" mc:Ignorable="d"
+        WindowStartupLocation="CenterOwner"
+        Title="ine" Height="150" Width="700"
+        Style="{StaticResource ResourceKey=Dialog}">
+    <Grid Background="#40953153">
+        <Grid HorizontalAlignment="Center" Height="60" VerticalAlignment="Top">
+            <TextBlock VerticalAlignment="Center" Text="Are you sure you want to close the application? All running transfers will be stopped."/>
+        </Grid>
+        <StackPanel HorizontalAlignment="Center" Height="30" Margin="0,0,0,20"
+                    VerticalAlignment="Bottom" Orientation="Horizontal">
+            <Button Content="Yes" Width="100" Click="HandleYes"/>
+            <Button Content="No" Width="100" Click="HandleNo"/>
+        </StackPanel>
+    </Grid>
+</Window>

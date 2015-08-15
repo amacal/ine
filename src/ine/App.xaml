@@ -29,6 +29,26 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style TargetType="Window" x:Key="Dialog" BasedOn="{StaticResource ResourceKey={x:Type Window}}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Window">
+                        <Border BorderThickness="1" BorderBrush="#cccccc">
+                            <Grid Background="#eeeeee">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Grid MouseDown="Border_MouseDown">
+                                    <TextBlock Margin="4" Text="{TemplateBinding Title}"/>
+                                </Grid>
+                                <ContentPresenter Name="content" Grid.Row="1" />
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style TargetType="TabControl">
             <Setter Property="TabStripPlacement" Value="Left"/>
             <Setter Property="OverridesDefaultStyle" Value="True"/>

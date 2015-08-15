@@ -87,6 +87,9 @@
     <Compile Include="Views\CaptchaControl.xaml.cs">
       <DependentUpon>CaptchaControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\CloseWindow.xaml.cs">
+      <DependentUpon>CloseWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\LinksControl.xaml.cs">
       <DependentUpon>LinksControl.xaml</DependentUpon>
     </Compile>
@@ -112,6 +115,10 @@
       <DependentUpon>TransferControl.xaml</DependentUpon>
     </Compile>
     <Page Include="Views\CaptchaControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\CloseWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

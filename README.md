@@ -1,6 +1,8 @@
 ine downloader
 ==============
 
+ine is a windows application to download files from popular file hosting sites
+
 release notes
 =============
 
@@ -9,7 +11,7 @@ release notes
 - [FEATURE] Captcha can be switched to audio and back
 - [IMPROVEMENT] PhantomJS sends less requests for unwanted content
 - [IMPROVEMENT] PhantomJS working directory is set to app-data
-- [IMPROVEMENT] Pressing enter in captcha text fields triggers solving it
+- [IMPROVEMENT] Pressing enter in the captcha text field triggers solving it
 
 # 0.2
 - [BUG] Captcha timeout could terminate the application

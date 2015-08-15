@@ -2,6 +2,7 @@
 using NAudio.Wave;
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -66,7 +67,6 @@ namespace ine.Views
                 this.solve.Click -= solveHandler;
                 this.reload.Click -= reloadHandler;
                 this.cancel.Click -= cancelHandler;
-                this.text.KeyDown -= keyHandler;
                 this.toAudio.Click -= toAudioHandler;
                 this.toText.Click -= toTextHandler;
                 this.text.KeyDown -= keyHandler;
@@ -97,7 +97,7 @@ namespace ine.Views
 
                                     while (waveOut.PlaybackState == PlaybackState.Playing)
                                     {
-                                        System.Threading.Thread.Sleep(100);
+                                        Thread.Sleep(100);
                                     }
                                 }
                             }

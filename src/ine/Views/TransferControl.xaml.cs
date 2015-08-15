@@ -26,6 +26,11 @@ namespace ine.Views
         public Action<LogEntry> OnLog { get; set; }
         public Func<Captcha, Task<string>> OnCaptcha { get; set; }
 
+        public bool IsWorking()
+        {
+            return this.model.IsWorking();
+        }
+
         public class ControlModel : ViewModelBase
         {
             public ControlModel()
@@ -40,6 +45,11 @@ namespace ine.Views
             public bool CanStart { get; set; }
             public bool CanStop { get; set; }
             public bool CanRemove { get; set; }
+
+            public bool IsWorking()
+            {
+                return this.Resources.Any(x => x.IsWorking() == true);
+            }
 
             public Resource[] GetStartable()
             {
