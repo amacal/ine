@@ -3,11 +3,29 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace ine
 {
     public partial class App : Application
     {
+        public App()
+        {
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            this.Dispatcher.UnhandledException += Dispatcher_UnhandledException;
+        }
+
+        private void Dispatcher_UnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+        {
+            new Facade().Handle(e.Exception, "Dispatcher caused unhandled exception");
+            e.Handled = true;
+        }
+
+        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            new Facade().Handle((Exception)e.ExceptionObject, "AppDomain caused unhandled exception");
+        }
+
         private void Border_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)

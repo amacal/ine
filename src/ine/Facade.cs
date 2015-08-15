@@ -1,6 +1,5 @@
 ﻿using ine.Domain;
 using Serilog;
-using Serilog.Events;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -611,6 +610,11 @@ namespace ine
                         break;
                 }
             }
+        }
+
+        public void Handle(Exception ex, string reason)
+        {
+            Log.Fatal(ex, reason);
         }
     }
 }
