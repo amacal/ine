@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.ComponentModel;
+using System.Threading;
+using System;
 
 namespace ine.Views
 {
@@ -50,8 +52,11 @@ namespace ine.Views
 
             if (this.transfer.IsWorking() == true && e.Cancel == false)
             {
+                TimeSpan timeout = TimeSpan.FromSeconds(10);
+                CancellationTokenSource cancellation = new CancellationTokenSource();
+
                 e.Cancel = true;
-                await this.transfer.StopAll();
+                await this.transfer.StopAll(cancellation.Token);
                 this.Close();
             }
 

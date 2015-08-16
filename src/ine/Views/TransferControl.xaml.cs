@@ -31,13 +31,13 @@ namespace ine.Views
             return this.model.IsWorking();
         }
 
-        public async Task StopAll()
+        public async Task StopAll(CancellationToken cancellation)
         {
             this.Stop(this.model.GetStoppable());
 
             while (this.model.IsWorking() == true)
             {
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellation);
             }
         }
 

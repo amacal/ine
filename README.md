@@ -8,6 +8,7 @@ release notes
 
 # 0.6
 - [IMPROVEMENT] Already downloaded resource is not startable
+- [IMPROVEMENT] Closing tha application takes no longer than 10 seconds
 
 # 0.5
 - [FEATURE] Support getting files from nitroflare folders
