@@ -75,7 +75,7 @@ namespace ine
         {
             Uri uri;
             List<Link> links = new List<Link>();
-            string pattern = @"(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?";
+            string pattern = @"(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-=]*)*\/?";
 
             if (String.IsNullOrWhiteSpace(text) == false)
             {
@@ -85,8 +85,6 @@ namespace ine
                     {
                         if (uri.Authority == "nitroflare.com" || uri.Authority == "www.nitroflare.com")
                         {
-                            uri = new Uri(match.Value.ToLower(), UriKind.Absolute);
-
                             if (uri.Segments.Length >= 3)
                             {
                                 if (uri.Segments[1].TrimEnd('/').ToLower() == "view")
@@ -94,8 +92,29 @@ namespace ine
                                     links.Add(new Link
                                     {
                                         Hosting = "nitroflare.com",
-                                        Url = uri
+                                        Url = new Uri(match.Value.ToLower(), UriKind.Absolute)
                                     });
+                                }
+                                else if (uri.Segments[1].TrimEnd('/').ToLower() == "folder")
+                                {
+                                    using (WebClient client = new WebClient())
+                                    {
+                                        try
+                                        {
+                                            client.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
+
+                                            string post = String.Format("userId={0}&folder={1}&page=1&perPage=50", uri.Segments[2].Trim('/'), Uri.EscapeDataString(uri.Segments[3].Trim('/')));
+                                            string data = await client.UploadStringTaskAsync("http://nitroflare.com/ajax/folder.php", post);
+                                            string absolute = data.Replace(@"view\/", @"http://nitroflare.com/view/").Replace(@"\/", "/");
+                                            Link[] found = await this.ParseTextToLinks(absolute, false);
+
+                                            links.AddRange(found);
+                                        }
+                                        catch (WebException)
+                                        {
+                                            // ignore
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -105,7 +124,10 @@ namespace ine
                             {
                                 try
                                 {
-                                    links.AddRange(await this.ParseTextToLinks(await client.DownloadStringTaskAsync(uri), false));
+                                    string data = await client.DownloadStringTaskAsync(uri);
+                                    Link[] found = await this.ParseTextToLinks(data, false);
+
+                                    links.AddRange(found);
                                 }
                                 catch (WebException)
                                 {
