@@ -63,7 +63,7 @@ namespace ine.Views
 
             public Resource[] GetStartable()
             {
-                return this.Resources.Where(x => x.IsWorking() == false).Select(x => x.Source).ToArray();
+                return this.Resources.Where(x => x.IsWorking() == false && x.IsCompleted == false).Select(x => x.Source).ToArray();
             }
 
             public Resource[] GetStoppable()

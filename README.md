@@ -6,9 +6,12 @@ ine is a windows application to download files from popular file hosting sites
 release notes
 =============
 
+# 0.6
+- [IMPROVEMENT] Already downloaded resource is not startable
+
 # 0.5
 - [FEATURE] Support getting files from nitroflare folders
-- [IMPROVEMENT] ETA is no longer trims minutes
+- [IMPROVEMENT] ETA no longer trims minutes
 - [IMPROVEMENT] Escape key works as No in the Close window
 - [IMPROVEMENT] Closing the application with running transfers stops them first
 

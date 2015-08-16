@@ -6,6 +6,10 @@ var page = web.create();
 page.settings.loadImages = false;
 page.settings.userAgent = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.130 Safari/537.36';
 
+function debug(message) {
+    console.log('debug: ' + message);
+}
+
 function onError(msg, trace) {
     console.log('fatal: ' + msg);
     fs.write('dump.txt', page.content, 'w');
@@ -16,23 +20,26 @@ function onRequest(requestData, networkRequest) {
     if (requestData.url.substring(0,32).match(/google/g) == null && requestData.url.substring(0,32).match(/nitroflare/g) == null) {
         request.abort();
     } else {
-        console.log('request: ' + requestData.url);
+        debug(requestData.url);
     }
 }
 
 function requireFile() {
+    debug('checking if file exists');
     var file = page.evaluate(function() {
         var element = document.querySelector('span[title]');
         if (element === undefined || element === null || element.length === 0) return undefined;
         return 'ok';
     });
     if (file === undefined || file === null) {
+        debug('the requested file doesn\'t exist');
         console.log('file-status: file doesn\'t exist');
         phantom.exit(0);
     }
 }
 
 function printFileName() {
+    debug('getting file-name');
     var filename = page.evaluate(function() {
         return document.querySelector('span[title]').title;
     });
@@ -40,25 +47,29 @@ function printFileName() {
 }
 
 function printFileSize() {
-    var filesize = page.evaluate(function() {
+    debug('getting file-size');
+    var filesize = page.evaluate(function () {
         return document.querySelector('span[title] span').innerText;
     });
     console.log('file-size: ' + filesize);
 }
 
 function printFileStatus() {
-    var message = page.evaluate(function() {
+    debug('getting file-status');
+    var message = page.evaluate(function () {
         var element = document.getElementById('error');
         if (element === undefined || element === null) return undefined;
         return element.innerText;
     });
     if (message !== undefined && message !== null) {
+        debug('the requested file reported status as: ' + message);
         console.log('file-status: ' + message);
         phantom.exit(0);
     }
 }
 
 function printCaptchaUrl() {
+    debug('getting captcha-url');
     var url = page.evaluate(function() {
         var image = document.getElementById('recaptcha_challenge_image');
         if (image !== undefined && image !== null) return image.src;
@@ -67,54 +78,61 @@ function printCaptchaUrl() {
         return null;
     });
     if (url !== undefined && url !== null) {
+        debug('found captcha-url: ' + url);
         console.log('captcha-url: ' + url);
     }
 }
 
-function printDownloadUrl(onMissing) {
-    var url = page.evaluate(function() {
+function printDownloadUrl(onRetry) {
+    debug('getting download-url');
+    var url = page.evaluate(function () {
         var element = document.getElementById('download');
         if (element === undefined || element === null) return undefined;
         return element.href;
     });
     if (url !== undefined && url !== null) {
+        debug('found download-url: ' + url);
         console.log('download-url: ' + url);
         phantom.exit(0);
     } else {
-        console.log('debug: retrying captcha.');
-        onMissing();
+        debug('download-url not found; retrying');
+        onRetry();
     }
 }
 
 function printErrorMessage() {
-    var message = page.evaluate(function() {
+    debug('getting error-message');
+    var message = page.evaluate(function () {
         var element = document.querySelector('.errMsg');
         if (element === undefined || element === null) return undefined;
         return element.innerText;
     });
     if (message !== undefined && message !== null) {
+        debug('found error-message: ' + message);
         console.log('message: ' + message);
         phantom.exit(0);
     }
 }
 
 function clickSlowDownload() {
-    page.evaluate(function() {
+    debug('clicking slow-download');
+    page.evaluate(function () {
         document.getElementById('slow-download').click();
     });
 }
 
 function clickStartTimer() {
-    page.evaluate(function() {
+    debug('clicking start-timer');
+    page.evaluate(function () {
         document.getElementById('beforeStartTimerBtn').click();
     });
 }
 
 function sendCaptcha(onContinue) {
-    console.log('debug: waiting for captcha');
+    debug('waiting for captcha');
     var solution = system.stdin.readLine();
     if (solution === '::reload::') {
-        console.log('debug: reloading captcha');
+        debug('reloading captcha');
         page.evaluate(function () {
             document.getElementById('recaptcha_reload').click();
         });
@@ -122,7 +140,7 @@ function sendCaptcha(onContinue) {
             handleCaptcha(onContinue);
         }, 3000);
     } else if (solution === '::audio::') {
-        console.log('debug: switching captcha to audio');
+        debug('switching captcha to audio');
         page.evaluate(function () {
             document.getElementById('recaptcha_switch_audio').click();
         });
@@ -130,7 +148,7 @@ function sendCaptcha(onContinue) {
             handleCaptcha(onContinue);
         }, 3000);
     } else if (solution === '::image::') {
-        console.log('debug: switching captcha to image');
+        debug('switching captcha to image');
         page.evaluate(function () {
             document.getElementById('recaptcha_switch_img').click();
         });
@@ -138,7 +156,7 @@ function sendCaptcha(onContinue) {
             handleCaptcha(onContinue);
         }, 3000);
     } else {
-        console.log('debug: sending captcha');
+        debug('sending captcha');
         page.evaluate(function (solution) {
             document.getElementById('recaptcha_response_field').value = solution;
             document.getElementById('sendReCaptcha').click();
