@@ -9,6 +9,7 @@ release notes
 # 0.5
 - [IMPROVEMENT] ETA is no longer trims minutes
 - [IMPROVEMENT] Escape key works as No in the Close window
+- [IMPROVEMENT] Closing the application with running transfers stops them first
 
 # 0.4
 - [IMPROVEMENT] Closing application with ongoing transfer triggers confirmation

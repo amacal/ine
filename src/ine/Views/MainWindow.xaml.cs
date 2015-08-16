@@ -41,11 +41,18 @@ namespace ine.Views
             }
         }
 
-        protected override void OnClosing(CancelEventArgs e)
+        protected override async void OnClosing(CancelEventArgs e)
         {
             if (this.transfer.IsWorking() == true)
             {
                 e.Cancel = CloseWindow.Show(this) == false;
+            }
+
+            if (this.transfer.IsWorking() == true && e.Cancel == false)
+            {
+                e.Cancel = true;
+                await this.transfer.StopAll();
+                this.Close();
             }
 
             base.OnClosing(e);

@@ -31,6 +31,16 @@ namespace ine.Views
             return this.model.IsWorking();
         }
 
+        public async Task StopAll()
+        {
+            this.Stop(this.model.GetStoppable());
+
+            while (this.model.IsWorking() == true)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1));
+            }
+        }
+
         public class ControlModel : ViewModelBase
         {
             public ControlModel()
@@ -293,6 +303,11 @@ namespace ine.Views
                 this.OnLog(new LogEntry { Level = "INFO", Message = String.Format("Stopping {0} item(s).", resources.Length) });
             }
 
+            this.Stop(resources);
+        }
+
+        private void Stop(Resource[] resources)
+        {
             foreach (Resource resource in resources)
             {
                 ResourceModel model = this.model.GetModel(resource);
