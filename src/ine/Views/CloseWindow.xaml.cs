@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Windows;
+using System.Windows.Input;
 
 namespace ine.Views
 {
@@ -36,6 +37,19 @@ namespace ine.Views
         {
             e.Cancel = this.DialogResult == null;
             base.OnClosing(e);
+        }
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                this.DialogResult = false;
+                this.Close();
+            }
+            else
+            {
+                base.OnKeyDown(e);
+            }
         }
     }
 }
