@@ -6,6 +6,9 @@ ine is a windows application to download files from popular file hosting sites
 release notes
 =============
 
+# 0.5
+- [IMPROVEMENT] ETA is no longer trims from minutes
+
 # 0.4
 - [IMPROVEMENT] Closing application with ongoing transfer triggers confirmation
 - [IMPROVEMENT] All logs are addionally persisted in the app-data directory

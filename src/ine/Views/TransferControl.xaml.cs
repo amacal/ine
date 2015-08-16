@@ -165,7 +165,16 @@ namespace ine.Views
 
             public void SetEstimation(TimeSpan time)
             {
-                string current = String.Format(@"{0:d\.hh\:mm\:ss}", time).TrimStart('0', '.', ':');
+                string current = String.Format(@"{0:d\.hh\:mm\:ss}", time);
+
+                if (time.TotalMinutes >= 1.0)
+                {
+                    current = current.TrimStart('0', '.', ':');
+                }
+                else
+                {
+                    current = current.Substring(current.Length - 4, 4);
+                }
 
                 if (current != this.Estimation)
                 {
