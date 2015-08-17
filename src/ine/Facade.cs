@@ -1,4 +1,5 @@
 ﻿using ine.Domain;
+using ine.Extensions;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -156,8 +157,8 @@ namespace ine
                     Parallel.ForEach(task.Links, new ParallelOptions { MaxDegreeOfParallelism = 2 }, link =>
                     {
                         task.OnStatus.Invoke(link, "checking");
-                        task.OnLog.Invoke(link, new LogEntry { Level = "INFO", Message = String.Format("Analyzing '{0}'.", link.Url) });
-                        task.OnLog.Invoke(link, new LogEntry { Level = "INFO", Message = "Starting PhantomJS" });
+                        task.OnLog.Information("Analyzing '{0}'.", link.Url);
+                        task.OnLog.Information("Starting PhantomJS");
 
                         ProcessStartInfo info = new ProcessStartInfo
                         {
@@ -199,13 +200,13 @@ namespace ine
                                 },
                                 OnFatal = text =>
                                 {
-                                    task.OnLog.Invoke(link, new LogEntry { Level = "WARN", Message = text });
+                                    task.OnLog.Warning(text);
                                     return true;
                                 },
                                 OnCaptcha = text => Task.FromResult(false),
                                 OnDebug = text =>
                                 {
-                                    task.OnLog.Invoke(link, new LogEntry { Level = "DEBUG", Message = text });
+                                    task.OnLog.Debug(text);
                                     return true;
                                 },
                                 OnFallback = text => true,
@@ -260,14 +261,14 @@ namespace ine
                             await this.DownloadFile(task, response.DownloadUrl);
 
                             task.OnCompleted.Invoke(true);
-                            task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Completed." });
+                            task.OnLog.Information("Completed.");
 
                             break;
                         }
 
                         task.OnStatus(String.Empty);
                         task.OnCompleted.Invoke(false);
-                        task.OnLog.Invoke(new LogEntry { Level = "WARN", Message = "Completed without downloading." });
+                        task.OnLog.Warning("Completed without downloading.");
 
                         break;
                     }
@@ -276,19 +277,19 @@ namespace ine
                 {
                     task.OnStatus("timeout");
                     task.OnCompleted.Invoke(false);
-                    task.OnLog.Invoke(new LogEntry { Level = "WARN", Message = "Solving captcha timed out." });
+                    task.OnLog.Warning("Solving captcha timed out.");
                 }
                 catch (OperationCanceledException)
                 {
                     task.OnStatus("cancelled");
                     task.OnCompleted.Invoke(false);
-                    task.OnLog.Invoke(new LogEntry { Level = "WARN", Message = "Downloading was cancelled." });
+                    task.OnLog.Warning("Downloading was cancelled.");
                 }
                 catch (Exception ex)
                 {
                     task.OnStatus("failed");
                     task.OnCompleted.Invoke(false);
-                    task.OnLog.Invoke(new LogEntry { Level = "ERROR", Message = "Downloading failed. " + ex.Message });
+                    task.OnLog.Warning("Downloading failed. " + ex.Message);
                 }
                 finally
                 {
@@ -406,7 +407,7 @@ namespace ine
             TimeSpan period = TimeSpan.FromSeconds(5);
 
             task.OnStatus.Invoke("pending");
-            task.OnLog(new LogEntry { Level = "INFO", Message = String.Format("Scheduling '{0}'.", task.Url) });
+            task.OnLog.Information("Scheduling '{0}'.", task.Url);
 
             while (succeeded == false)
             {
@@ -414,7 +415,7 @@ namespace ine
                 succeeded = task.Scheduler.Schedule(task.Hosting);
             }
 
-            task.OnLog(new LogEntry { Level = "INFO", Message = String.Format("Url '{0}' acquired download slot.", task.Url) });
+            task.OnLog.Information("Url '{0}' acquired download slot.", task.Url);
         }
 
         private void ReleaseSlot(ResourceTask task)
@@ -431,7 +432,7 @@ namespace ine
             };
 
             task.OnStatus.Invoke("starting");
-            task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Starting PhantomJS." });
+            task.OnLog.Information("Starting PhantomJS.");
 
             ProcessStartInfo info = new ProcessStartInfo
             {
@@ -470,12 +471,12 @@ namespace ine
                     },
                     OnDebug = text =>
                     {
-                        task.OnLog.Invoke(new LogEntry { Level = "DEBUG", Message = text });
+                        task.OnLog.Debug(text);
                         return true;
                     },
                     OnFatal = text =>
                     {
-                        task.OnLog.Invoke(new LogEntry { Level = "FATAL", Message = text });
+                        task.OnLog.Debug(text);
                         return true;
                     },
                     OnFileName = text => true,
@@ -490,7 +491,7 @@ namespace ine
                     string solution;
 
                     task.Cancellation.ThrowIfCancellationRequested();
-                    task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Handling captcha." });
+                    task.OnLog.Information("Handling captcha.");
 
                     using (WebClient client = new WebClient())
                     {
@@ -519,14 +520,14 @@ namespace ine
                         captcha.Reload = async () =>
                         {
                             await process.StandardInput.WriteLineAsync("::reload::");
-                            task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Reloading captcha." });
+                            task.OnLog.Information("Reloading captcha.");
                             await this.HandleInThread(local, task.Cancellation, process);
                         };
 
                         captcha.ToAudio = async () =>
                         {
                             await process.StandardInput.WriteLineAsync("::audio::");
-                            task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Switching to audio." });
+                            task.OnLog.Information("Switching to audio.");
                             await this.HandleInThread(local, task.Cancellation, process);
                             captcha.Type = "audio";
                         };
@@ -534,7 +535,7 @@ namespace ine
                         captcha.ToImage = async () =>
                         {
                             await process.StandardInput.WriteLineAsync("::image::");
-                            task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Switching to image." });
+                            task.OnLog.Information("Switching to image.");
                             await this.HandleInThread(local, task.Cancellation, process);
                             captcha.Type = "image";
                         };
@@ -545,7 +546,7 @@ namespace ine
                     }
 
                     task.Cancellation.ThrowIfCancellationRequested();
-                    task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Sending captcha." });
+                    task.OnLog.Information("Sending captcha.");
 
                     await process.StandardInput.WriteLineAsync(solution);
                     return true;
@@ -578,7 +579,7 @@ namespace ine
                 counter = TimeSpan.FromMinutes(20);
             }
 
-            task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Waiting." });
+            task.OnLog.Information("Waiting.");
 
             while (counter.TotalMinutes > 0)
             {
@@ -630,7 +631,7 @@ namespace ine
                 };
 
                 task.OnStatus.Invoke("downloading");
-                task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Downloading file." });
+                task.OnLog.Information("Downloading file.");
 
                 await client.DownloadFileTaskAsync(url, task.Destination);
                 task.Cancellation.Register(client.CancelAsync);

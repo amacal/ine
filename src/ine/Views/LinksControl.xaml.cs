@@ -47,7 +47,7 @@ namespace ine.Views
                         this.model.Complete(link, resource);
                     }));
                 },
-                OnLog = (link, entry) =>
+                OnLog = entry =>
                 {
                     dispatcher.BeginInvoke(new Action(() =>
                     {

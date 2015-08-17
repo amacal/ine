@@ -10,6 +10,6 @@ namespace ine.Domain
 
         public Action<Link, Resource> OnCompleted;
 
-        public Action<Link, LogEntry> OnLog;
+        public Action<LogEntry> OnLog;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using ine.Core;
 using ine.Domain;
+using ine.Extensions;
 using System;
 using System.IO;
 using System.Linq;
@@ -250,7 +251,7 @@ namespace ine.Views
 
             if (resources.Length > 0)
             {
-                this.OnLog(new LogEntry { Level = "INFO", Message = String.Format("Adding {0} item(s).", resources.Length) });
+                this.OnLog.Information("Adding {0} item(s).", resources.Length);
             }
 
             this.model.AddResources(resources);
@@ -264,7 +265,7 @@ namespace ine.Views
 
             if (resources.Length > 0)
             {
-                this.OnLog(new LogEntry { Level = "INFO", Message = String.Format("Scheduling {0} item(s).", resources.Length) });
+                this.OnLog.Information("Scheduling {0} item(s).", resources.Length);
             }
 
             foreach (Resource resource in resources)
@@ -300,7 +301,7 @@ namespace ine.Views
 
             if (resources.Length > 0)
             {
-                this.OnLog(new LogEntry { Level = "INFO", Message = String.Format("Stopping {0} item(s).", resources.Length) });
+                this.OnLog.Information("Stopping {0} item(s).", resources.Length);
             }
 
             this.Stop(resources);
@@ -326,7 +327,7 @@ namespace ine.Views
 
             if (resources.Length > 0)
             {
-                this.OnLog(new LogEntry { Level = "INFO", Message = String.Format("Removing {0} item(s).", resources.Length) });
+                this.OnLog.Information("Removing {0} item(s).", resources.Length);
             }
 
             foreach (Resource resource in resources)
