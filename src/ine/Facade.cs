@@ -179,30 +179,41 @@ namespace ine
                                 IsAvailable = true
                             };
 
-                            while (process.StandardOutput.EndOfStream == false)
+                            PhantomCallback callback = new PhantomCallback
                             {
-                                string line = process.StandardOutput.ReadLine();
-                                string[] parts = line.Split(new[] { ':' }, 2);
-
-                                switch (parts[0])
+                                OnDownload = url => true,
+                                OnFileName = text =>
                                 {
-                                    case "file-name":
-                                        resource.Name = parts[1].Trim();
-                                        break;
+                                    resource.Name = text;
+                                    return true;
+                                },
+                                OnFileSize = text =>
+                                {
+                                    resource.Size = text;
+                                    return true;
+                                },
+                                OnFileStatus = text =>
+                                {
+                                    resource.IsAvailable = false;
+                                    return false;
+                                },
+                                OnFatal = text =>
+                                {
+                                    task.OnLog.Invoke(link, new LogEntry { Level = "WARN", Message = text });
+                                    return true;
+                                },
+                                OnCaptcha = text => Task.FromResult(false),
+                                OnDebug = text =>
+                                {
+                                    task.OnLog.Invoke(link, new LogEntry { Level = "DEBUG", Message = text });
+                                    return true;
+                                },
+                                OnFallback = text => true,
+                                OnMessage = text => true,
+                                OnRaw = text => { }
+                            };
 
-                                    case "file-size":
-                                        resource.Size = parts[1].Trim();
-                                        break;
-
-                                    case "file-status":
-                                        resource.IsAvailable = false;
-                                        break;
-
-                                    case "fatal":
-                                        task.OnLog.Invoke(link, new LogEntry { Level = "FATAL", Message = parts[1].Trim() });
-                                        break;
-                                }
-                            }
+                            this.Handle(callback, CancellationToken.None, process).Wait();
 
                             if (resource.IsAvailable == false)
                             {
@@ -293,6 +304,102 @@ namespace ine
             public string DownloadUrl;
         }
 
+        private class PhantomCallback
+        {
+            public Func<string, Task<bool>> OnCaptcha;
+
+            public Func<string, bool> OnFileName;
+            public Func<string, bool> OnFileSize;
+            public Func<string, bool> OnFileStatus;
+
+            public Func<string, bool> OnDownload;
+            public Func<string, bool> OnMessage;
+            public Func<string, bool> OnDebug;
+            public Func<string, bool> OnFatal;
+            public Func<string, bool> OnFallback;
+
+            public Action<string> OnRaw;
+
+            public PhantomCallback Override(PhantomCallback callback)
+            {
+                return new PhantomCallback
+                {
+                    OnCaptcha = callback.OnCaptcha ?? this.OnCaptcha,
+                    OnFileName = callback.OnFileName ?? this.OnFileName,
+                    OnFileSize = callback.OnFileSize ?? this.OnFileSize,
+                    OnFileStatus = callback.OnFileStatus ?? this.OnFileStatus,
+                    OnDownload = callback.OnDownload ?? this.OnDownload,
+                    OnMessage = callback.OnMessage ?? this.OnMessage,
+                    OnDebug = callback.OnDebug ?? this.OnDebug,
+                    OnFatal = callback.OnFatal ?? this.OnFatal,
+                    OnRaw = callback.OnRaw ?? this.OnRaw,
+                    OnFallback = callback.OnFallback ?? this.OnFallback
+                };
+            }
+        }
+
+        private Task HandleInThread(PhantomCallback callback, CancellationToken cancellation, Process process)
+        {
+            return Task.Run(async () => await this.Handle(callback, cancellation, process));
+        }
+
+        private async Task Handle(PhantomCallback callback, CancellationToken cancellation, Process process)
+        {
+            bool proceed = true;
+
+            while (proceed == true && process.StandardOutput.EndOfStream == false)
+            {
+                cancellation.ThrowIfCancellationRequested();
+
+                string line = await process.StandardOutput.ReadLineAsync();
+                string[] parts = line.Split(new[] { ':' }, 2);
+
+                if (parts.Length == 2)
+                {
+                    callback.OnRaw.Invoke(line);
+
+                    switch (parts[0])
+                    {
+                        case "file-name":
+                            proceed = callback.OnFileName.Invoke(parts[1].Trim());
+                            break;
+
+                        case "file-size":
+                            proceed = callback.OnFileSize.Invoke(parts[1].Trim());
+                            break;
+
+                        case "file-status":
+                            proceed = callback.OnFileStatus.Invoke(parts[1].Trim());
+                            break;
+
+                        case "captcha-url":
+                            proceed = await callback.OnCaptcha.Invoke(parts[1].Trim());
+                            break;
+
+                        case "download-url":
+                            proceed = callback.OnDownload.Invoke(parts[1].Trim());
+                            break;
+
+                        case "message":
+                            proceed = callback.OnMessage.Invoke(parts[1].Trim());
+                            break;
+
+                        case "debug":
+                            proceed = callback.OnDebug.Invoke(parts[1].Trim());
+                            break;
+
+                        case "fatal":
+                            proceed = callback.OnFatal.Invoke(parts[1].Trim());
+                            break;
+
+                        default:
+                            proceed = callback.OnFallback.Invoke(parts[1].Trim());
+                            break;
+                    }
+                }
+            }
+        }
+
         private async Task AcquireSlot(ResourceTask task)
         {
             bool succeeded = task.Scheduler.Schedule(task.Hosting);
@@ -338,147 +445,127 @@ namespace ine
                 WorkingDirectory = GetDataPath()
             };
 
-            string solution = null;
-            Process process = Process.Start(info);
-
-            try
+            using (Process process = Process.Start(info))
             {
-                task.OnStatus("working");
-
-                while (process.StandardOutput.EndOfStream == false)
+                PhantomCallback callback = new PhantomCallback
                 {
-                    task.Cancellation.ThrowIfCancellationRequested();
-
-                    string line = process.StandardOutput.ReadLine();
-                    string[] parts = line.Split(new[] { ':' }, 2);
-
-                    response.Lines.Add(line);
-                    switch (parts[0])
+                    OnDownload = url =>
                     {
-                        case "captcha-url":
-                            solution = parts[1].Trim();
-                            break;
-
-                        case "download-url":
-                            response.DownloadUrl = parts[1].Trim();
-                            break;
-
-                        case "message":
-                            {
-                                Match match = regex.Match(line);
-
-                                if (match.Success == true)
-                                {
-                                    if (match.Groups["minutes"].Success == true)
-                                    {
-                                        response.Waiting = TimeSpan.FromMinutes(Int32.Parse(match.Groups["minutes"].Value));
-                                    }
-                                }
-                            }
-
-                            break;
-
-                        case "debug":
-                        case "request":
-                            task.OnLog.Invoke(new LogEntry { Level = "DEBUG", Message = line });
-                            break;
-
-                        case "fatal":
-                            task.OnLog.Invoke(new LogEntry { Level = "FATAL", Message = parts[1].Trim() });
-                            break;
-                    }
-
-                    if (String.IsNullOrWhiteSpace(solution) == false)
+                        response.DownloadUrl = url;
+                        return false;
+                    },
+                    OnMessage = message =>
                     {
-                        task.Cancellation.ThrowIfCancellationRequested();
-                        task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Handling captcha." });
+                        Match match = regex.Match(message);
 
-                        using (WebClient client = new WebClient())
+                        if (match.Success == true)
                         {
-                            task.OnStatus("decaptching");
-
-                            TimeSpan timeout = TimeSpan.FromMinutes(3);
-                            CancellationTokenSource source = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(timeout).Token, task.Cancellation);
-                            Captcha captcha = new Captcha
+                            if (match.Groups["minutes"].Success == true)
                             {
-                                Type = "image",
-                                Data = client.DownloadData(solution),
-                                Cancellation = source.Token
-                            };
-
-                            captcha.Reload = async () =>
-                            {
-                                process.StandardInput.WriteLine("::reload::");
-                                task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Reloading captcha." });
-
-                                do
-                                {
-                                    line = await process.StandardOutput.ReadLineAsync();
-                                }
-                                while (line.StartsWith("captcha-url: ") == false);
-
-                                source = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(timeout).Token, task.Cancellation);
-                                captcha.Cancellation = source.Token;
-                                captcha.Data = await client.DownloadDataTaskAsync(line.Substring("captcha-url: ".Length));
-                            };
-
-                            captcha.ToAudio = async () =>
-                            {
-                                process.StandardInput.WriteLine("::audio::");
-                                task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Switching to audio." });
-
-                                do
-                                {
-                                    line = await process.StandardOutput.ReadLineAsync();
-                                }
-                                while (line.StartsWith("captcha-url: ") == false);
-
-                                source = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(timeout).Token, task.Cancellation);
-                                captcha.Cancellation = source.Token;
-                                captcha.Data = await client.DownloadDataTaskAsync(line.Substring("captcha-url: ".Length));
-                                captcha.Type = "audio";
-                            };
-
-                            captcha.ToImage = async () =>
-                            {
-                                process.StandardInput.WriteLine("::image::");
-                                task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Switching to image." });
-
-                                do
-                                {
-                                    line = await process.StandardOutput.ReadLineAsync();
-                                }
-                                while (line.StartsWith("captcha-url: ") == false);
-
-                                source = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(timeout).Token, task.Cancellation);
-                                captcha.Cancellation = source.Token;
-                                captcha.Data = await client.DownloadDataTaskAsync(line.Substring("captcha-url: ".Length));
-                                captcha.Type = "image";
-                            };
-
-                            solution = await task.OnCaptcha.Invoke(captcha);
-                            task.OnStatus("working");
+                                response.Waiting = TimeSpan.FromMinutes(Int32.Parse(match.Groups["minutes"].Value));
+                            }
                         }
 
-                        task.Cancellation.ThrowIfCancellationRequested();
-                        task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Sending captcha." });
+                        return true;
+                    },
+                    OnDebug = text =>
+                    {
+                        task.OnLog.Invoke(new LogEntry { Level = "DEBUG", Message = text });
+                        return true;
+                    },
+                    OnFatal = text =>
+                    {
+                        task.OnLog.Invoke(new LogEntry { Level = "FATAL", Message = text });
+                        return true;
+                    },
+                    OnFileName = text => true,
+                    OnFileSize = text => true,
+                    OnFileStatus = text => true,
+                    OnFallback = text => true,
+                    OnRaw = line => { }
+                };
 
-                        process.StandardInput.WriteLine(solution);
-                        solution = null;
+                callback.OnCaptcha = async url =>
+                {
+                    string solution;
+
+                    task.Cancellation.ThrowIfCancellationRequested();
+                    task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Handling captcha." });
+
+                    using (WebClient client = new WebClient())
+                    {
+                        task.OnStatus("decaptching");
+
+                        TimeSpan timeout = TimeSpan.FromMinutes(3);
+                        CancellationTokenSource source = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(timeout).Token, task.Cancellation);
+                        Captcha captcha = new Captcha
+                        {
+                            Type = "image",
+                            Data = client.DownloadData(url),
+                            Cancellation = source.Token
+                        };
+
+                        PhantomCallback local = callback.Override(new PhantomCallback
+                        {
+                            OnCaptcha = async reloadUrl =>
+                            {
+                                source = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(timeout).Token, task.Cancellation);
+                                captcha.Cancellation = source.Token;
+                                captcha.Data = await client.DownloadDataTaskAsync(reloadUrl);
+                                return false;
+                            }
+                        });
+
+                        captcha.Reload = async () =>
+                        {
+                            await process.StandardInput.WriteLineAsync("::reload::");
+                            task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Reloading captcha." });
+                            await this.HandleInThread(local, task.Cancellation, process);
+                        };
+
+                        captcha.ToAudio = async () =>
+                        {
+                            await process.StandardInput.WriteLineAsync("::audio::");
+                            task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Switching to audio." });
+                            await this.HandleInThread(local, task.Cancellation, process);
+                            captcha.Type = "audio";
+                        };
+
+                        captcha.ToImage = async () =>
+                        {
+                            await process.StandardInput.WriteLineAsync("::image::");
+                            task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Switching to image." });
+                            await this.HandleInThread(local, task.Cancellation, process);
+                            captcha.Type = "image";
+                        };
+
+
+                        solution = await task.OnCaptcha.Invoke(captcha);
+                        task.OnStatus("working");
+                    }
+
+                    task.Cancellation.ThrowIfCancellationRequested();
+                    task.OnLog.Invoke(new LogEntry { Level = "INFO", Message = "Sending captcha." });
+
+                    await process.StandardInput.WriteLineAsync(solution);
+                    return true;
+                };
+
+                try
+                {
+                    task.OnStatus("working");
+                    await this.Handle(callback, task.Cancellation, process);
+
+                    process.WaitForExit();
+                    return response;
+                }
+                finally
+                {
+                    if (process.HasExited == false)
+                    {
+                        process.Kill();
                     }
                 }
-
-                process.WaitForExit();
-                return response;
-            }
-            finally
-            {
-                if (process.HasExited == false)
-                {
-                    process.Kill();
-                }
-
-                process.Dispose();
             }
         }
 
