@@ -76,7 +76,7 @@ namespace ine
         {
             Uri uri;
             List<Link> links = new List<Link>();
-            string pattern = @"(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-=]*)*\/?";
+            string pattern = @"(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.\-=]*)*\/?";
 
             if (String.IsNullOrWhiteSpace(text) == false)
             {
@@ -266,9 +266,9 @@ namespace ine
                             break;
                         }
 
-                        task.OnStatus(String.Empty);
+                        task.OnStatus("terminated");
                         task.OnCompleted.Invoke(false);
-                        task.OnLog.Warning("Completed without downloading.");
+                        task.OnLog.Warning("Terminated without downloading.");
 
                         break;
                     }
@@ -347,58 +347,64 @@ namespace ine
         private async Task Handle(PhantomCallback callback, CancellationToken cancellation, Process process)
         {
             bool proceed = true;
+            string line;
 
-            while (proceed == true && process.StandardOutput.EndOfStream == false)
+            do
             {
                 cancellation.ThrowIfCancellationRequested();
+                line = await process.StandardOutput.ReadLineAsync();
+                cancellation.ThrowIfCancellationRequested();
 
-                string line = await process.StandardOutput.ReadLineAsync();
-                string[] parts = line.Split(new[] { ':' }, 2);
-
-                if (parts.Length == 2)
+                if (line != null)
                 {
-                    callback.OnRaw.Invoke(line);
+                    string[] parts = line.Split(new[] { ':' }, 2);
 
-                    switch (parts[0])
+                    if (parts.Length == 2)
                     {
-                        case "file-name":
-                            proceed = callback.OnFileName.Invoke(parts[1].Trim());
-                            break;
+                        callback.OnRaw.Invoke(line);
 
-                        case "file-size":
-                            proceed = callback.OnFileSize.Invoke(parts[1].Trim());
-                            break;
+                        switch (parts[0])
+                        {
+                            case "file-name":
+                                proceed = callback.OnFileName.Invoke(parts[1].Trim());
+                                break;
 
-                        case "file-status":
-                            proceed = callback.OnFileStatus.Invoke(parts[1].Trim());
-                            break;
+                            case "file-size":
+                                proceed = callback.OnFileSize.Invoke(parts[1].Trim());
+                                break;
 
-                        case "captcha-url":
-                            proceed = await callback.OnCaptcha.Invoke(parts[1].Trim());
-                            break;
+                            case "file-status":
+                                proceed = callback.OnFileStatus.Invoke(parts[1].Trim());
+                                break;
 
-                        case "download-url":
-                            proceed = callback.OnDownload.Invoke(parts[1].Trim());
-                            break;
+                            case "captcha-url":
+                                proceed = await callback.OnCaptcha.Invoke(parts[1].Trim());
+                                break;
 
-                        case "message":
-                            proceed = callback.OnMessage.Invoke(parts[1].Trim());
-                            break;
+                            case "download-url":
+                                proceed = callback.OnDownload.Invoke(parts[1].Trim());
+                                break;
 
-                        case "debug":
-                            proceed = callback.OnDebug.Invoke(parts[1].Trim());
-                            break;
+                            case "message":
+                                proceed = callback.OnMessage.Invoke(parts[1].Trim());
+                                break;
 
-                        case "fatal":
-                            proceed = callback.OnFatal.Invoke(parts[1].Trim());
-                            break;
+                            case "debug":
+                                proceed = callback.OnDebug.Invoke(parts[1].Trim());
+                                break;
 
-                        default:
-                            proceed = callback.OnFallback.Invoke(parts[1].Trim());
-                            break;
+                            case "fatal":
+                                proceed = callback.OnFatal.Invoke(parts[1].Trim());
+                                break;
+
+                            default:
+                                proceed = callback.OnFallback.Invoke(parts[1].Trim());
+                                break;
+                        }
                     }
                 }
             }
+            while (proceed == true && line != null);
         }
 
         private async Task AcquireSlot(ResourceTask task)

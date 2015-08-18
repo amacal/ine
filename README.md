@@ -7,6 +7,8 @@ release notes
 =============
 
 # 0.6
+- [FIX] Sometimes nitroflare.com cannot return correct cookie on first request
+- [FIX] Sometimes pasted url containing dash are not found correctly
 - [IMPROVEMENT] Already downloaded resource is not startable
 - [IMPROVEMENT] Closing tha application takes no longer than 10 seconds
 
@@ -28,8 +30,8 @@ release notes
 - [IMPROVEMENT] Pressing enter in the captcha text field triggers solving it
 
 # 0.2
-- [BUG] Captcha timeout could terminate the application
-- [BUG] PhantomJS fatal not related to the process could terminate the process
+- [FIX] Captcha timeout could terminate the application
+- [FIX] PhantomJS fatal not related to the process could terminate the process
 
 # 0.1
 - Initial release

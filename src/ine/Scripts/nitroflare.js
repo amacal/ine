@@ -10,10 +10,18 @@ function debug(message) {
     console.log('debug: ' + message);
 }
 
-function onError(msg, trace) {
-    console.log('fatal: ' + msg);
+function fatal(message) {
+    console.log('debug: ' + message);
+}
+
+function render() {
     fs.write('dump.txt', page.content, 'w');
     page.render('dump.png');
+}
+
+function onError(msg, trace) {
+    fatal(msg);
+    render();
 }
 
 function onRequest(requestData, networkRequest) {
@@ -77,9 +85,13 @@ function printCaptchaUrl() {
         if (audio !== undefined && audio !== null) return audio.href;
         return null;
     });
-    if (url !== undefined && url !== null) {
+    if (url !== undefined && url !== null && url.length > 0) {
         debug('found captcha-url: ' + url);
         console.log('captcha-url: ' + url);
+    } else {
+        debug('captcha-url not found; rendering and terminating');
+        render();
+        phantom.exit(0);
     }
 }
 
@@ -90,7 +102,7 @@ function printDownloadUrl(onRetry) {
         if (element === undefined || element === null) return undefined;
         return element.href;
     });
-    if (url !== undefined && url !== null) {
+    if (url !== undefined && url !== null && url.length > 0) {
         debug('found download-url: ' + url);
         console.log('download-url: ' + url);
         phantom.exit(0);
@@ -107,7 +119,7 @@ function printErrorMessage() {
         if (element === undefined || element === null) return undefined;
         return element.innerText;
     });
-    if (message !== undefined && message !== null) {
+    if (message !== undefined && message !== null && message.length > 0) {
         debug('found error-message: ' + message);
         console.log('message: ' + message);
         phantom.exit(0);
@@ -116,16 +128,32 @@ function printErrorMessage() {
 
 function clickSlowDownload() {
     debug('clicking slow-download');
-    page.evaluate(function () {
-        document.getElementById('slow-download').click();
+    var result = page.evaluate(function () {
+        var element = document.getElementById('slow-download');
+        if (element === undefined || element === null) return undefined;
+        element.click();
+        return true;
     });
+    if (result === undefined || result === null) {
+        debug('slow-download button not found; terminating');
+        render();
+        phantom.exit(0);
+    }
 }
 
 function clickStartTimer() {
     debug('clicking start-timer');
-    page.evaluate(function () {
-        document.getElementById('beforeStartTimerBtn').click();
+    var result = page.evaluate(function () {
+        var element = document.getElementById('beforeStartTimerBtn');
+        if (element === undefined || element === null) return undefined;
+        element.click();
+        return true;
     });
+    if (result === undefined || result === null) {
+        debug('start-timer button not found; terminating');
+        render();
+        phantom.exit(0);
+    }
 }
 
 function sendCaptcha(onContinue) {
@@ -187,7 +215,7 @@ function query(url) {
     phantom.onError = onError;
     page.onError = onError;
     page.onResourceRequested = onRequest;
-    page.open(url, function(status) {
+    page.open(url, function() {
         requireFile();
         printFileName();
         printFileSize();
@@ -200,18 +228,20 @@ function download(url) {
     phantom.onError = onError;
     page.onError = onError;
     page.onResourceRequested = onRequest;
-    page.open(url, function(status) {
-        requireFile();
-        printFileName();
-        printFileSize();
-        printFileStatus();
-        clickSlowDownload();
-        setTimeout(function() {
-            clickStartTimer();
+    page.open('http://nitroflare.com', function() {
+        page.open(url, function() {
+            requireFile();
+            printFileName();
+            printFileSize();
+            printFileStatus();
+            clickSlowDownload();
             setTimeout(function() {
-                decaptcha();
-            }, 70000);
-        }, 20000);
+                clickStartTimer();
+                setTimeout(function() {
+                    decaptcha();
+                }, 70000);
+            }, 20000);
+        });
     });
 };
 
@@ -219,12 +249,16 @@ setTimeout(function() {
     phantom.exit(0);
 }, 900000);
 
+function normalize(url) {
+    return url.replace('http://www.nitroflare.com/', 'http://nitroflare.com/');
+}
+
 if (system.args[1] === 'query') {
-    query(system.args[2]);
+    query(normalize(system.args[2]));
 }
 
 else if (system.args[1] === 'download') {
-    download(system.args[2]);
+    download(normalize(system.args[2]));
 }
 
 else {
