@@ -26,7 +26,11 @@
                     <GridViewColumn Header="Message" Width="400">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Path=Message}" TextAlignment="Left" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding Path=Message}" TextAlignment="Left" TextTrimming="CharacterEllipsis">
+                                    <TextBlock.ToolTip>
+                                        <TextBlock Text="{Binding Path=Message}"/>
+                                    </TextBlock.ToolTip>
+                                </TextBlock>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>

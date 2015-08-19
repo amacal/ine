@@ -21,7 +21,11 @@
                     <GridViewColumn Header="Filename" Width="480">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Path=Name}" TextAlignment="Left" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding Path=Name}" TextAlignment="Left" TextTrimming="CharacterEllipsis">
+                                    <TextBlock.ToolTip>
+                                        <TextBlock Text="{Binding Path=Name}"/>
+                                    </TextBlock.ToolTip>
+                                </TextBlock>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>

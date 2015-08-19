@@ -42,6 +42,11 @@ namespace ine.Views
                     Message = entry.Message,
                     Time = DateTime.Now.ToString("yyyy'-'MM'-'dd HH':'mm':'ss'.'ff", CultureInfo.InvariantCulture)
                 });
+
+                if (this.Entries.Count > 1000)
+                {
+                    this.Entries.RemoveAt(0);
+                }
             }
         }
 
