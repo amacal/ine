@@ -6,6 +6,9 @@ ine is a windows application to download files from popular file hosting sites
 release notes
 =============
 
+# 0.7
+- [IMPROVEMENT] All lists contains tooltips for all timmable columns
+
 # 0.6
 - [FIX] Sometimes nitroflare.com cannot return correct cookie on first request
 - [FIX] Sometimes pasted url containing dash are not found correctly

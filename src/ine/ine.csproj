@@ -87,11 +87,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Core\NotificationList.cs" />
     <Compile Include="Core\ViewModelBase.cs" />
     <Compile Include="Domain\Captcha.cs" />
     <Compile Include="Domain\Link.cs" />
     <Compile Include="Domain\LogEntry.cs" />
+    <Compile Include="Extensions\AudioExtensions.cs" />
+    <Compile Include="Extensions\DispatcherExtensions.cs" />
+    <Compile Include="Extensions\ImageExtensions.cs" />
     <Compile Include="Extensions\LoggingExtensions.cs" />
     <Compile Include="Views\CaptchaControl.xaml.cs">
       <DependentUpon>CaptchaControl.xaml</DependentUpon>

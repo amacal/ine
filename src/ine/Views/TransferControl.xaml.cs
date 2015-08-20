@@ -349,7 +349,7 @@ namespace ine.Views
         {
             return status =>
             {
-                dispatcher.BeginInvoke(new Action(() => model.SetStatus(status)));
+                dispatcher.Handle(() => model.SetStatus(status));
             };
         }
 
@@ -357,7 +357,7 @@ namespace ine.Views
         {
             return (received, total) =>
             {
-                dispatcher.BeginInvoke(new Action(() => model.SetProgress(received, total)));
+                dispatcher.Handle(() => model.SetProgress(received, total));
             };
         }
 
@@ -365,7 +365,7 @@ namespace ine.Views
         {
             return speed =>
             {
-                dispatcher.BeginInvoke(new Action(() => model.SetSpeed(speed)));
+                dispatcher.Handle(() => model.SetSpeed(speed));
             };
         }
 
@@ -373,7 +373,7 @@ namespace ine.Views
         {
             return estimation =>
             {
-                dispatcher.BeginInvoke(new Action(() => model.SetEstimation(estimation)));
+                dispatcher.Handle(() => model.SetEstimation(estimation));
             };
         }
 
@@ -381,11 +381,11 @@ namespace ine.Views
         {
             return result =>
             {
-                dispatcher.BeginInvoke(new Action(async () =>
+                dispatcher.Handle(async () =>
                 {
                     model.Complete(result);
                     await this.Persist();
-                }));
+                });
             };
         }
 
@@ -393,7 +393,7 @@ namespace ine.Views
         {
             return entry =>
             {
-                dispatcher.BeginInvoke(new Action(() => this.OnLog.Invoke(entry)));
+                dispatcher.Handle(() => this.OnLog.Invoke(entry));
             };
         }
 
@@ -403,7 +403,7 @@ namespace ine.Views
             {
                 TaskCompletionSource<string> completion = new TaskCompletionSource<string>();
 
-                dispatcher.BeginInvoke(new Action(async () =>
+                dispatcher.Handle(async () =>
                 {
                     string solution = await this.OnCaptcha.Invoke(captcha);
                     if (String.IsNullOrWhiteSpace(solution) == false)
@@ -414,7 +414,7 @@ namespace ine.Views
                     {
                         completion.TrySetCanceled(captcha.Cancellation);
                     }
-                }));
+                });
 
                 return completion.Task;
             };

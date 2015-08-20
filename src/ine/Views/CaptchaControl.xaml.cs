@@ -1,13 +1,10 @@
 ﻿using ine.Domain;
-using NAudio.Wave;
+using ine.Extensions;
 using System;
-using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
 namespace ine.Views
@@ -81,28 +78,7 @@ namespace ine.Views
 
                 try
                 {
-                    await Task.Run(() =>
-                    {
-                        using (MemoryStream memory = new MemoryStream(captcha.Data, false))
-                        {
-                            memory.Seek(0, SeekOrigin.Begin);
-
-                            using (WaveStream pcm = WaveFormatConversionStream.CreatePcmStream(new Mp3FileReader(memory)))
-                            using (WaveStream stream = new BlockAlignReductionStream(pcm))
-                            {
-                                using (WaveOut waveOut = new WaveOut(WaveCallbackInfo.FunctionCallback()))
-                                {
-                                    waveOut.Init(stream);
-                                    waveOut.Play();
-
-                                    while (waveOut.PlaybackState == PlaybackState.Playing)
-                                    {
-                                        Thread.Sleep(100);
-                                    }
-                                }
-                            }
-                        }
-                    });
+                    await captcha.Play();
                 }
                 finally
                 {
@@ -242,7 +218,7 @@ namespace ine.Views
         {
             if (captcha.Type == "image")
             {
-                this.image.Source = this.ApplyImage(captcha);
+                this.image.Source = captcha.ToBitmap();
                 this.play.Visibility = Visibility.Collapsed;
             }
 
@@ -251,26 +227,6 @@ namespace ine.Views
                 this.image.Source = null;
                 this.play.Visibility = Visibility.Visible;
             }
-        }
-
-        private BitmapImage ApplyImage(Captcha captcha)
-        {
-            BitmapImage image = new BitmapImage();
-
-            using (var memory = new MemoryStream(captcha.Data))
-            {
-                memory.Seek(0, SeekOrigin.Begin);
-
-                image.BeginInit();
-                image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
-                image.CacheOption = BitmapCacheOption.OnLoad;
-                image.UriSource = null;
-                image.StreamSource = memory;
-                image.EndInit();
-                image.Freeze();
-            }
-
-            return image;
         }
 
         private void HandleTextChanged(object sender, TextChangedEventArgs e)

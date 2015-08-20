@@ -1,5 +1,6 @@
 ﻿using ine.Core;
 using ine.Domain;
+using ine.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,24 +36,24 @@ namespace ine.Views
             {
                 OnStatus = (link, status) =>
                 {
-                    dispatcher.BeginInvoke(new Action(() =>
+                    dispatcher.Handle(() =>
                     {
                         this.model.SetStatus(link, status);
-                    }));
+                    });
                 },
                 OnCompleted = (link, resource) =>
                 {
-                    dispatcher.BeginInvoke(new Action(() =>
+                    dispatcher.Handle(() =>
                     {
                         this.model.Complete(link, resource);
-                    }));
+                    });
                 },
                 OnLog = entry =>
                 {
-                    dispatcher.BeginInvoke(new Action(() =>
+                    dispatcher.Handle(() =>
                     {
                         this.OnLog.Invoke(entry);
-                    }));
+                    });
                 }
             };
 
