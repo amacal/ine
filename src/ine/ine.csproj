@@ -60,6 +60,18 @@
     <ApplicationIcon>ine.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.WindowsAPICodePack-Core.1.1.0.0\lib\Microsoft.WindowsAPICodePack.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.Shell, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.WindowsAPICodePack-Shell.1.1.0.0\lib\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.ShellExtensions, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.WindowsAPICodePack-Shell.1.1.0.0\lib\Microsoft.WindowsAPICodePack.ShellExtensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="NAudio, Version=1.7.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\NAudio.1.7.3\lib\net35\NAudio.dll</HintPath>
       <Private>True</Private>
@@ -91,6 +103,7 @@
     <Compile Include="Domain\Captcha.cs" />
     <Compile Include="Domain\Link.cs" />
     <Compile Include="Domain\LogEntry.cs" />
+    <Compile Include="Domain\Configuration.cs" />
     <Compile Include="Extensions\AudioExtensions.cs" />
     <Compile Include="Extensions\DispatcherExtensions.cs" />
     <Compile Include="Extensions\ImageExtensions.cs" />
@@ -106,6 +119,9 @@
     </Compile>
     <Compile Include="Views\LoggingControl.xaml.cs">
       <DependentUpon>LoggingControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\OptionsControl.xaml.cs">
+      <DependentUpon>OptionsControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\PasteControl.xaml.cs">
       <DependentUpon>PasteControl.xaml</DependentUpon>
@@ -165,6 +181,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\OptionsControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\PasteControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

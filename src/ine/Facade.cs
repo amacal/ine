@@ -674,7 +674,7 @@ namespace ine
             });
         }
 
-        public Task PersisteResources(Resource[] resources)
+        public Task PersistResources(Resource[] resources)
         {
             return Task.Run(() =>
             {
@@ -692,6 +692,49 @@ namespace ine
                         writer.Write(resource.Url);
                         writer.WriteLine();
                     }
+
+                    writer.Flush();
+                    stream.Flush();
+                }
+            });
+        }
+
+        public Task<Configuration> GetConfiguration()
+        {
+            return Task.Run(() =>
+            {
+                Configuration configuration = new Configuration();
+
+                using (FileStream stream = new FileStream(GetDataPath("configuration.txt"), FileMode.OpenOrCreate, FileAccess.Read, FileShare.None, 16 * 1024, FileOptions.None))
+                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    while (reader.EndOfStream == false)
+                    {
+                        string[] parts = reader.ReadLine().Split(new[] { '|' }, 2);
+                        if (parts.Length == 2)
+                        {
+                            switch (parts[0])
+                            {
+                                case "DownloadPath":
+                                    configuration.DownloadPath = parts[1];
+                                    break;
+                            }
+                        }
+                    }
+                }
+
+                return configuration;
+            });
+        }
+
+        public Task PersistConfiguration(Configuration configuration)
+        {
+            return Task.Run(() =>
+            {
+                using (FileStream stream = new FileStream(GetDataPath("configuration.txt"), FileMode.Create, FileAccess.Write, FileShare.None, 16 * 1024, FileOptions.WriteThrough))
+                using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8))
+                {
+                    writer.WriteLine("DownloadPath|" + configuration.DownloadPath);
 
                     writer.Flush();
                     stream.Flush();

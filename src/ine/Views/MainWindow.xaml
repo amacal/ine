@@ -15,6 +15,7 @@
             <local:CaptchaControl x:Name="captcha" />
         </TabItem>
         <TabItem Header="Options" Background="#3f886291">
+            <local:OptionsControl x:Name="options"/>
         </TabItem>
         <TabItem Header="Logs" Background="#3f4bae8d">
             <local:LoggingControl x:Name="logging"/>

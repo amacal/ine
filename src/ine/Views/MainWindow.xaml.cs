@@ -16,12 +16,25 @@ namespace ine.Views
 
             this.transfer.OnLog = this.HandleLog;
             this.transfer.OnCaptcha = this.HandleCaptcha;
+            this.transfer.OnResources = this.HandleResources;
+            this.options.OnConfiguration = this.HandleConfiguration;
         }
 
         private void HandleLog(LogEntry entry)
         {
             this.logging.AddLog(entry);
             new Facade().PersistLogs(entry);
+        }
+
+        private async void HandleConfiguration(Configuration configuration)
+        {
+            this.transfer.SetConfiguration(configuration);
+            await new Facade().PersistConfiguration(configuration);
+        }
+
+        private Task HandleResources(Resource[] resources)
+        {
+            return new Facade().PersistResources(resources);
         }
 
         private async Task<string> HandleCaptcha(Captcha captcha)
@@ -41,6 +54,18 @@ namespace ine.Views
             {
                 this.captchaHeader.Foreground = previous;
             }
+        }
+
+        protected override async void OnInitialized(EventArgs e)
+        {
+            base.OnInitialized(e);
+
+            Configuration configuration = await new Facade().GetConfiguration();
+            Resource[] resources = await new Facade().GetAllResources();
+
+            this.transfer.SetConfiguration(configuration);
+            this.options.SetConfiguration(configuration);
+            this.transfer.SetResources(resources);
         }
 
         protected override async void OnClosing(CancelEventArgs e)

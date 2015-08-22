@@ -25,11 +25,22 @@ namespace ine.Views
         }
 
         public Action<LogEntry> OnLog { get; set; }
+        public Func<Resource[], Task> OnResources { get; set; }
         public Func<Captcha, Task<string>> OnCaptcha { get; set; }
 
         public bool IsWorking()
         {
             return this.model.IsWorking();
+        }
+
+        public void SetConfiguration(Configuration configuration)
+        {
+            this.model.SetConfiguration(configuration);
+        }
+
+        public void SetResources(Resource[] resources)
+        {
+            this.model.AddResources(resources);
         }
 
         public async Task StopAll(CancellationToken cancellation)
@@ -51,6 +62,7 @@ namespace ine.Views
             }
 
             public Scheduler Scheduler { get; set; }
+            public Configuration Configuration { get; set; }
             public ResourceModel[] Resources { get; set; }
 
             public bool CanStart { get; set; }
@@ -98,6 +110,11 @@ namespace ine.Views
 
                 this.RecalculateButtons();
                 this.UpdateButtons();
+            }
+
+            public void SetConfiguration(Configuration configuration)
+            {
+                this.Configuration = configuration;
             }
 
             private bool NotContain(Resource resouce)
@@ -236,15 +253,6 @@ namespace ine.Views
             }
         }
 
-        protected override async void OnInitialized(EventArgs e)
-        {
-            base.OnInitialized(e);
-
-            Resource[] resources = await new Facade().GetAllResources();
-
-            this.model.AddResources(resources);
-        }
-
         private async void HandleNew(object sender, RoutedEventArgs e)
         {
             Resource[] resources = NewWindow.Show(Application.Current.MainWindow);
@@ -260,12 +268,17 @@ namespace ine.Views
 
         private async void HandleStart(object sender, RoutedEventArgs e)
         {
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            string path = this.model.Configuration.DownloadPath;
             Resource[] resources = StartWindow.Show(Application.Current.MainWindow, this.model.GetStartable());
 
             if (resources.Length > 0)
             {
                 this.OnLog.Information("Scheduling {0} item(s).", resources.Length);
+            }
+
+            if (String.IsNullOrEmpty(path) == true)
+            {
+                path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             }
 
             foreach (Resource resource in resources)
@@ -422,7 +435,7 @@ namespace ine.Views
 
         private Task Persist()
         {
-            return new Facade().PersisteResources(this.model.GetPersistable());
+            return this.OnResources.Invoke(this.model.GetPersistable());
         }
     }
 }

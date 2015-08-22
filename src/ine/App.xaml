@@ -270,5 +270,28 @@
             <Setter Property="Background" Value="#90ffffff"/>
             <Setter Property="BorderThickness" Value="0"/>
         </Style>
+        <Style TargetType="GroupBox">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="GroupBox">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="30" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Grid Background="#30ffffff" Grid.Row="0">
+                                <ContentPresenter
+                                    Margin="4"
+                                    ContentSource="Header"
+                                    RecognizesAccessKey="True" />
+                            </Grid>
+                            <Border Background="#05ffffff" Grid.Row="1">
+                                <ContentPresenter Margin="12" />
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Application.Resources>
 </Application>
