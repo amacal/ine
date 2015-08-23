@@ -13,6 +13,9 @@
                 <Grid Height="30" VerticalAlignment="Top">
                     <TextBlock VerticalAlignment="Center" Text="Choose which items you want to start"/>
                 </Grid>
+                <StackPanel Height="30" VerticalAlignment="Top" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBox x:Name="filter" Width="250" VerticalContentAlignment="Center" TextChanged="HandleFilterChanged"/>
+                </StackPanel>
                 <StackPanel Height="30" Orientation="Horizontal"
                             VerticalAlignment="Bottom" HorizontalAlignment="Center">
                     <Button Content="Select all" Width="120" Click="HandleSelectAll" 

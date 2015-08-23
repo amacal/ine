@@ -1,7 +1,12 @@
 ﻿using ine.Core;
 using ine.Domain;
+using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace ine.Views
 {
@@ -35,12 +40,16 @@ namespace ine.Views
 
         public class WindowModel : ViewModelBase
         {
+            private ICollectionView resources;
+
             public WindowModel()
             {
                 this.CanInvert = true;
+                this.Resources = new ObservableCollection<ResourceModel>();
+                this.resources = CollectionViewSource.GetDefaultView(this.Resources);
             }
 
-            public ResourceModel[] Resources { get; set; }
+            public ObservableCollection<ResourceModel> Resources { get; set; }
 
             public bool CanStart { get; set; }
             public bool CanSelectAll { get; set; }
@@ -54,8 +63,10 @@ namespace ine.Views
 
             public void AddResources(Resource[] resources)
             {
-                this.Resources = resources.Select(this.Create).ToArray();
-                this.Raise("Resources");
+                foreach (ResourceModel model in resources.Select(this.Create).ToArray())
+                {
+                    this.Resources.Add(model);
+                }
 
                 this.RecalculateButtons();
                 this.UpdateButtons();
@@ -106,6 +117,22 @@ namespace ine.Views
                 this.CanStart = this.Resources.Any(x => x.Selected == true);
             }
 
+            public void Filter(string text)
+            {
+                if (String.IsNullOrWhiteSpace(text) == false)
+                {
+                    this.resources.Filter = data =>
+                    {
+                        return data is ResourceModel && ((ResourceModel)data).Filter(text) == true;
+                    };
+                }
+                else
+                {
+                    this.resources.Filter = null;
+                }
+            }
+
+
             public void UpdateButtons()
             {
                 this.Raise("CanSelectAll");
@@ -144,6 +171,11 @@ namespace ine.Views
                 this.Raise("Selected");
             }
 
+            public bool Filter(string text)
+            {
+                return this.Name.ToLower().Contains(text.ToLower());
+            }
+
             public static ResourceModel FromResource(Resource resource, WindowModel owner)
             {
                 return new ResourceModel
@@ -175,6 +207,11 @@ namespace ine.Views
         private void HandleStart(object sender, RoutedEventArgs e)
         {
             this.DialogResult = true;
+        }
+
+        private void HandleFilterChanged(object sender, TextChangedEventArgs e)
+        {
+            this.model.Filter(this.filter.Text);
         }
     }
 }

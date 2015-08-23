@@ -6,6 +6,12 @@ ine is a windows application to download files from popular file hosting sites
 release notes
 =============
 
+# 0.9
+- [FEATURE] Search in the transfer and start view
+
+# 0.8
+- [FEATURE] Download path is now configurable
+
 # 0.7
 - [IMPROVEMENT] All lists contains tooltips for all timmable columns
 

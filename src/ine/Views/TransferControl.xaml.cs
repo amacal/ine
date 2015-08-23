@@ -2,12 +2,15 @@
 using ine.Domain;
 using ine.Extensions;
 using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Threading;
 
 namespace ine.Views
@@ -55,15 +58,18 @@ namespace ine.Views
 
         public class ControlModel : ViewModelBase
         {
+            private ICollectionView resources;
+
             public ControlModel()
             {
                 this.Scheduler = new Scheduler();
-                this.Resources = new ResourceModel[0];
+                this.Resources = new ObservableCollection<ResourceModel>();
+                this.resources = CollectionViewSource.GetDefaultView(this.Resources);
             }
 
             public Scheduler Scheduler { get; set; }
             public Configuration Configuration { get; set; }
-            public ResourceModel[] Resources { get; set; }
+            public ObservableCollection<ResourceModel> Resources { get; set; }
 
             public bool CanStart { get; set; }
             public bool CanStop { get; set; }
@@ -96,8 +102,10 @@ namespace ine.Views
 
             public void AddResources(Resource[] resources)
             {
-                this.Resources = this.Resources.Concat(resources.Where(this.NotContain).Select(this.Create)).ToArray();
-                this.Raise("Resources");
+                foreach (ResourceModel model in resources.Where(this.NotContain).Select(this.Create).ToArray())
+                {
+                    this.Resources.Add(model);
+                }
 
                 this.RecalculateButtons();
                 this.UpdateButtons();
@@ -105,8 +113,13 @@ namespace ine.Views
 
             public void RemoveResources(Resource[] resources)
             {
-                this.Resources = this.Resources.Where(x => resources.Contains(x.Source) == false).ToArray();
-                this.Raise("Resources");
+                foreach (ResourceModel model in this.Resources.ToArray())
+                {
+                    if (resources.Contains(model.Source) == true)
+                    {
+                        this.Resources.Remove(model);
+                    }
+                }
 
                 this.RecalculateButtons();
                 this.UpdateButtons();
@@ -115,6 +128,21 @@ namespace ine.Views
             public void SetConfiguration(Configuration configuration)
             {
                 this.Configuration = configuration;
+            }
+
+            public void Filter(string text)
+            {
+                if (String.IsNullOrWhiteSpace(text) == false)
+                {
+                    this.resources.Filter = data =>
+                    {
+                        return data is ResourceModel && ((ResourceModel)data).Filter(text) == true;
+                    };
+                }
+                else
+                {
+                    this.resources.Filter = null;
+                }
             }
 
             private bool NotContain(Resource resouce)
@@ -240,6 +268,11 @@ namespace ine.Views
                 return this.Cancellation != null;
             }
 
+            public bool Filter(string text)
+            {
+                return this.Name.ToLower().Contains(text.ToLower());
+            }
+
             public static ResourceModel FromResource(Resource resource, ControlModel owner)
             {
                 return new ResourceModel
@@ -356,6 +389,11 @@ namespace ine.Views
 
             this.model.RemoveResources(resources);
             await this.Persist();
+        }
+
+        private void HandleFilterChanged(object sender, TextChangedEventArgs e)
+        {
+            this.model.Filter(this.filter.Text);
         }
 
         private Action<string> SetStatus(Dispatcher dispatcher, ResourceModel model)
