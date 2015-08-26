@@ -319,6 +319,9 @@ namespace ine
             public Func<string, bool> OnFatal;
             public Func<string, bool> OnFallback;
 
+            public Func<string, bool> OnDumpImage;
+            public Func<string, bool> OnDumpHtml;
+
             public Action<string> OnRaw;
 
             public PhantomCallback Override(PhantomCallback callback)
@@ -333,6 +336,8 @@ namespace ine
                     OnMessage = callback.OnMessage ?? this.OnMessage,
                     OnDebug = callback.OnDebug ?? this.OnDebug,
                     OnFatal = callback.OnFatal ?? this.OnFatal,
+                    OnDumpImage = callback.OnDumpImage ?? this.OnDumpImage,
+                    OnDumpHtml = callback.OnDumpHtml ?? this.OnDumpHtml,
                     OnRaw = callback.OnRaw ?? this.OnRaw,
                     OnFallback = callback.OnFallback ?? this.OnFallback
                 };
@@ -395,6 +400,14 @@ namespace ine
 
                             case "fatal":
                                 proceed = callback.OnFatal.Invoke(parts[1].Trim());
+                                break;
+
+                            case "dump-image":
+                                proceed = callback.OnDumpImage.Invoke(parts[1].Trim());
+                                break;
+
+                            case "dump-html":
+                                proceed = callback.OnDumpHtml.Invoke(parts[1].Trim());
                                 break;
 
                             default:
@@ -485,11 +498,21 @@ namespace ine
                         task.OnLog.Debug(text);
                         return true;
                     },
+                    OnDumpImage = base64 =>
+                    {
+                        task.OnLog.Debug("PhantomJS dumped an image.", Convert.FromBase64String(base64), "image");
+                        return true;
+                    },
+                    OnDumpHtml = base64 =>
+                    {
+                        task.OnLog.Debug("PhantomJS dumped an html content.", Convert.FromBase64String(base64), "text");
+                        return true;
+                    },
                     OnFileName = text => true,
                     OnFileSize = text => true,
                     OnFileStatus = text => true,
                     OnFallback = text => true,
-                    OnRaw = line => { }
+                    OnRaw = line => { },
                 };
 
                 callback.OnCaptcha = async url =>
@@ -512,6 +535,20 @@ namespace ine
                             Cancellation = source.Token
                         };
 
+                        Action debug = () =>
+                        {
+                            switch (captcha.Type)
+                            {
+                                case "image":
+                                    task.OnLog.Debug("Got captcha image data.", captcha.Data, "image");
+                                    break;
+
+                                case "audio":
+                                    task.OnLog.Debug("Got captcha audio data.", captcha.Data, "audio");
+                                    break;
+                            }
+                        };
+
                         PhantomCallback local = callback.Override(new PhantomCallback
                         {
                             OnCaptcha = async reloadUrl =>
@@ -519,10 +556,13 @@ namespace ine
                                 source = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(timeout).Token, task.Cancellation);
                                 captcha.Cancellation = source.Token;
                                 captcha.Data = await client.DownloadDataTaskAsync(reloadUrl);
+
+                                debug.Invoke();
                                 return false;
                             }
                         });
 
+                        debug.Invoke();
                         captcha.Reload = async () =>
                         {
                             await process.StandardInput.WriteLineAsync("::reload::");
@@ -534,18 +574,17 @@ namespace ine
                         {
                             await process.StandardInput.WriteLineAsync("::audio::");
                             task.OnLog.Information("Switching to audio.");
-                            await this.HandleInThread(local, task.Cancellation, process);
                             captcha.Type = "audio";
+                            await this.HandleInThread(local, task.Cancellation, process);
                         };
 
                         captcha.ToImage = async () =>
                         {
                             await process.StandardInput.WriteLineAsync("::image::");
                             task.OnLog.Information("Switching to image.");
-                            await this.HandleInThread(local, task.Cancellation, process);
                             captcha.Type = "image";
+                            await this.HandleInThread(local, task.Cancellation, process);
                         };
-
 
                         solution = await task.OnCaptcha.Invoke(captcha);
                         task.OnStatus("working");

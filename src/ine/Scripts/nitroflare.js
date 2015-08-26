@@ -1,6 +1,5 @@
 var system = require('system');
 var web = require('webpage');
-var fs = require('fs');
 var page = web.create();
 
 page.settings.loadImages = false;
@@ -15,8 +14,8 @@ function fatal(message) {
 }
 
 function render() {
-    fs.write('dump.txt', page.content, 'w');
-    page.render('dump.png');
+    console.log('dump-html: ', btoa(page.content));
+    console.log('dump-image: ', page.renderBase64('PNG'));
 }
 
 function onError(msg, trace) {

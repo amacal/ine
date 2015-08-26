@@ -102,12 +102,14 @@
     <Compile Include="Core\ViewModelBase.cs" />
     <Compile Include="Domain\Captcha.cs" />
     <Compile Include="Domain\Link.cs" />
+    <Compile Include="Domain\LogAttachment.cs" />
     <Compile Include="Domain\LogEntry.cs" />
     <Compile Include="Domain\Configuration.cs" />
     <Compile Include="Extensions\AudioExtensions.cs" />
     <Compile Include="Extensions\DispatcherExtensions.cs" />
     <Compile Include="Extensions\ImageExtensions.cs" />
     <Compile Include="Extensions\LoggingExtensions.cs" />
+    <Compile Include="Extensions\ShellExtensions.cs" />
     <Compile Include="Views\CaptchaControl.xaml.cs">
       <DependentUpon>CaptchaControl.xaml</DependentUpon>
     </Compile>

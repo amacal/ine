@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:ine.Views"
              mc:Ignorable="d" d:DesignHeight="400" d:DesignWidth="700">
     <Grid>
-        <ListView Margin="0,0,0,0" ItemsSource="{Binding Path=Entries}">
+        <ListView ItemsSource="{Binding Path=Entries}">
             <ListView.View>
                 <GridView AllowsColumnReorder="False">
                     <GridViewColumn Header="Time" Width="180">
@@ -23,7 +23,7 @@
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
-                    <GridViewColumn Header="Message" Width="400">
+                    <GridViewColumn Header="Message" Width="350">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Path=Message}" TextAlignment="Left" TextTrimming="CharacterEllipsis">
@@ -31,6 +31,24 @@
                                         <TextBlock Text="{Binding Path=Message}"/>
                                     </TextBlock.ToolTip>
                                 </TextBlock>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Width="30" CellTemplateSelector="{Binding Path=Attachment}">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button x:Name="Presenter" Click="HandleShow" 
+                                        Style="{StaticResource ResourceKey=Image}"
+                                        Visibility="Collapsed">
+                                    <Image Initialized="HandleImageInitialized"/>
+                                </Button>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding Path=HasAttachment}" Value="True">
+                                        <DataTrigger.Setters>
+                                            <Setter TargetName="Presenter" Property="Visibility" Value="Visible"/>
+                                        </DataTrigger.Setters>
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>

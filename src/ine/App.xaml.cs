@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -63,15 +64,28 @@ namespace ine
         private void Border_Loaded(object sender, RoutedEventArgs e)
         {
             ListView listView = (ListView)VisualTreeHelper.GetParent((DependencyObject)e.Source);
+            GridView view = listView.View as GridView;
 
-            int autoFillColumnIndex = (listView.View as GridView).Columns.Count - 1;
             if (listView.ActualWidth == Double.NaN)
                 listView.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
+
+            int autoFillColumnIndex = view.Columns.Count - 1;
+            double maxWidth = view.Columns.Max(x => x.ActualWidth);
+
             double remainingSpace = listView.ActualWidth;
-            for (int i = 0; i < (listView.View as GridView).Columns.Count; i++)
-                if (i != autoFillColumnIndex)
-                    remainingSpace -= (listView.View as GridView).Columns[i].ActualWidth;
-            (listView.View as GridView).Columns[autoFillColumnIndex].Width = remainingSpace - 18 >= 0 ? remainingSpace - 18 : 0;
+            for (int i = 0; i < view.Columns.Count; i++)
+            {
+                if (view.Columns[i].ActualWidth != maxWidth)
+                {
+                    remainingSpace -= view.Columns[i].ActualWidth;
+                }
+                else
+                {
+                    autoFillColumnIndex = i;
+                }
+            }
+
+            view.Columns[autoFillColumnIndex].Width = remainingSpace - 18 >= 0 ? remainingSpace - 18 : 0;
         }
     }
 }

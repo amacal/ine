@@ -6,6 +6,9 @@ ine is a windows application to download files from popular file hosting sites
 release notes
 =============
 
+# 0.10
+- [IMPROVEMENT] Support viewing phantom screenshots and html-content in logs
+
 # 0.9
 - [FEATURE] Search in the transfer and start view
 
