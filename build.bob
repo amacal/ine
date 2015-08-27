@@ -32,6 +32,30 @@ public class Build : IBob
         });
     }
 
+    private IEnumerable<ITask> Merge()
+    {
+        yield return FileSystem.NewDirectory(parameters =>
+        {
+            parameters.Path = FileSystem.Directories.Relative("build\\merge");
+        });
+
+        yield return NuGet.Install(parameters =>
+        {
+            parameters.Package = NuGet.Repository.Get("ilrepack");
+            parameters.Path = NuGet.Path.Online(settings =>
+            {
+                settings.Cache = NuGet.Cache.AppData();
+            });
+        });
+
+        yield return ILRepack.Merge(parameters =>
+        {
+            parameters.Output = FileSystem.Files.Relative("build\\merge\\ine.exe");
+            parameters.Primary = FileSystem.Files.Match("build\\output\\ine.exe");
+            parameters.Assemblies = FileSystem.Files.Match("build\\output\\*.dll");
+        });
+    }
+
     private IEnumerable<ITask> Default()
     {
         yield break;
@@ -40,6 +64,6 @@ public class Build : IBob
     public void Execute(IPipeline pipeline)
     {
         pipeline.Default(Default);
-        pipeline.Define(Clean, Restore, Compile, Default);
+        pipeline.Define(Clean, Restore, Compile, Default, Merge);
     }
 }
