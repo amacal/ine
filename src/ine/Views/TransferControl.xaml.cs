@@ -75,6 +75,8 @@ namespace ine.Views
             public bool CanStop { get; set; }
             public bool CanRemove { get; set; }
 
+            public double VerticalOffset { get; set; }
+
             public bool IsWorking()
             {
                 return this.Resources.Any(x => x.IsWorking() == true);
@@ -395,6 +397,17 @@ namespace ine.Views
         {
             this.model.Filter(this.filter.Text);
         }
+
+        private void HandleLoaded(object sender, RoutedEventArgs e)
+        {
+            this.list.ScrollToVerticalOffset(this.model.VerticalOffset);
+        }
+
+        private void HandleUnloaded(object sender, RoutedEventArgs e)
+        {
+            this.model.VerticalOffset = this.list.GetVerticalOffset();
+        }
+
 
         private Action<string> SetStatus(Dispatcher dispatcher, ResourceModel model)
         {

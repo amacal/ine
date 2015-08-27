@@ -18,7 +18,11 @@
             <local:OptionsControl x:Name="options"/>
         </TabItem>
         <TabItem Header="Logs" Background="#3f4bae8d">
-            <local:LoggingControl x:Name="logging"/>
+            <ContentPresenter>
+                <ContentPresenter.Content>
+                    <local:LoggingControl x:Name="logging"/>
+                </ContentPresenter.Content>
+            </ContentPresenter>
         </TabItem>
         <TabItem Header="Feedback" Background="#3f0977a5">
         </TabItem>

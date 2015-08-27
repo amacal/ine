@@ -18,7 +18,7 @@
         <StackPanel Height="30" VerticalAlignment="Top" Orientation="Horizontal" HorizontalAlignment="Right">
             <TextBox x:Name="filter" Width="250" VerticalContentAlignment="Center" TextChanged="HandleFilterChanged"/>
         </StackPanel>
-        <ListView Margin="0,35,0,0" ItemsSource="{Binding Path=Resources}">
+        <ListView x:Name="list" Margin="0,35,0,0" ItemsSource="{Binding Path=Resources}">
             <ListView.View>
                 <GridView AllowsColumnReorder="False">
                     <GridViewColumn Header="Filename" Width="480">

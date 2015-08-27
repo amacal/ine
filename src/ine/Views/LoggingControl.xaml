@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:ine.Views"
              mc:Ignorable="d" d:DesignHeight="400" d:DesignWidth="700">
     <Grid>
-        <ListView ItemsSource="{Binding Path=Entries}">
+        <ListView x:Name="list" ItemsSource="{Binding Path=Entries}">
             <ListView.View>
                 <GridView AllowsColumnReorder="False">
                     <GridViewColumn Header="Time" Width="180">

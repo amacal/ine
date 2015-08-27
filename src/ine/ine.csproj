@@ -109,6 +109,7 @@
     <Compile Include="Extensions\DispatcherExtensions.cs" />
     <Compile Include="Extensions\ImageExtensions.cs" />
     <Compile Include="Extensions\LoggingExtensions.cs" />
+    <Compile Include="Extensions\ScrollExtensions.cs" />
     <Compile Include="Extensions\ShellExtensions.cs" />
     <Compile Include="Views\CaptchaControl.xaml.cs">
       <DependentUpon>CaptchaControl.xaml</DependentUpon>
