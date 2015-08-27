@@ -26,6 +26,7 @@ namespace ine.Views
         public void AddLog(LogEntry entry)
         {
             this.model.AddLog(entry);
+            this.ScroolToBottomIfNeeded();
         }
 
         public class ControlModel : ViewModelBase
@@ -36,6 +37,8 @@ namespace ine.Views
             }
 
             public ObservableCollection<EntryModel> Entries { get; set; }
+
+            public bool AutoScrolling { get; set; }
             public double VerticalOffset { get; set; }
 
             public void AddLog(LogEntry entry)
@@ -46,6 +49,12 @@ namespace ine.Views
                 {
                     this.Entries.RemoveAt(0);
                 }
+            }
+
+            public void ToggleAutoScrolling()
+            {
+                this.AutoScrolling = this.AutoScrolling == false;
+                this.Raise("AutoScrolling");
             }
         }
 
@@ -96,6 +105,20 @@ namespace ine.Views
         private void HandleUnloaded(object sender, RoutedEventArgs e)
         {
             this.model.VerticalOffset = this.list.GetVerticalOffset();
+        }
+
+        private void ToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.model.ToggleAutoScrolling();
+            this.ScroolToBottomIfNeeded();
+        }
+
+        private void ScroolToBottomIfNeeded()
+        {
+            if (this.model.AutoScrolling == true)
+            {
+                this.list.ScrollToBottom();
+            }
         }
     }
 }

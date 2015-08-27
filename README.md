@@ -6,6 +6,10 @@ ine is a windows application to download files from popular file hosting sites
 release notes
 =============
 
+# 0.11
+- [FIX] Scroll position is kept when switching between tabs
+- [IMPROVEMENT] Support autoscrolling in the logs view
+
 # 0.10
 - [IMPROVEMENT] Support viewing phantom screenshots and html-content in logs
 

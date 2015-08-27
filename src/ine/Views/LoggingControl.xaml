@@ -6,7 +6,13 @@
              xmlns:local="clr-namespace:ine.Views"
              mc:Ignorable="d" d:DesignHeight="400" d:DesignWidth="700">
     <Grid>
-        <ListView x:Name="list" ItemsSource="{Binding Path=Entries}">
+        <Grid Height="30" VerticalAlignment="Bottom">
+            <ToggleButton Style="{StaticResource ResourceKey=CheckBoxToggleButton}"
+                          Content="Autoscroll" IsChecked="{Binding Path=AutoScrolling, Mode=OneWay}"
+                          Click="ToggleButton_Click"
+                          VerticalAlignment="Center" HorizontalAlignment="Right"/>
+        </Grid>
+        <ListView x:Name="list" Margin="0,0,0,35" ItemsSource="{Binding Path=Entries}">
             <ListView.View>
                 <GridView AllowsColumnReorder="False">
                     <GridViewColumn Header="Time" Width="180">

@@ -6,6 +6,11 @@ namespace ine.Extensions
 {
     public static class ScrollExtensions
     {
+        public static void ScrollToBottom(this ListView target)
+        {
+            FindScrollViewer(target).ScrollToBottom();
+        }
+
         public static void ScrollToVerticalOffset(this ListView target, double value)
         {
             FindScrollViewer(target).ScrollToVerticalOffset(value);
